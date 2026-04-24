@@ -415,10 +415,22 @@ const Layout = {
    ============================================================ */
 const Chat = {
   _convId: null,
+  _useSb: false,
+  _sbUnsub: null,
+  _sbMsgs: [],
+  _sbPoll: null,
+  _sbLastSig: "",
 
-  /* 初始化：获取/创建 session 和会话，注册实时监听 */
+  /* 初始化：Supabase 优先，否则 localStorage */
   init() {
-    // 同步 auth 信息到 session
+    if (window.SupabaseChat && SupabaseChat.isReady()) {
+      void Chat._initSupabase();
+      return;
+    }
+    Chat._initLocal();
+  },
+
+  _initLocal() {
     const user = window.Auth && Auth.current();
     const session = user
       ? DataStore.updateSession({ name: user.name || user.email, email: user.email || "" })
@@ -431,7 +443,6 @@ const Chat = {
     );
     Chat._convId = conv.id;
 
-    // 注入欢迎消息（仅当该会话没有任何消息时）
     const existing = DataStore.getConversationMessages(conv.id);
     if (existing.length === 0) {
       const store = window.Layout ? Layout._getStore() : {};
@@ -441,15 +452,12 @@ const Chat = {
         name: store.name || "HOMART Sales",
         message: "Hi! 👋 Welcome to HOMART Hardware. Ask us about pricing, stock, lead times, or paste a product list — we'll quote you quickly.",
       });
-      // welcome message doesn't count as unread for customer
       DataStore.markConversationRead(conv.id, "customer");
     }
 
-    // 跨标签页实时监听：商家回复 → 立即更新
     window.addEventListener("storage", (e) => {
       if (e.key === STORAGE_KEYS.MESSAGES) Chat._onNewMessage();
     });
-    // 同页 + 其他标签（BroadcastChannel 转发时 detail 为空）
     window.addEventListener("homart:messages", (e) => {
       if (e.detail == null) {
         Chat._onNewMessage();
@@ -461,12 +469,86 @@ const Chat = {
     });
   },
 
+  async _initSupabase() {
+    try {
+      if (Chat._sbPoll) {
+        clearInterval(Chat._sbPoll);
+        Chat._sbPoll = null;
+      }
+      const user = window.Auth && Auth.current();
+      if (user)
+        DataStore.updateSession({ name: user.name || user.email, email: user.email || "" });
+      else DataStore.getSession();
+
+      const convId = await SupabaseChat.ensureCustomerConversation();
+      Chat._convId = convId;
+      Chat._useSb = true;
+      const welcome =
+        "Hi! 👋 Welcome to HOMART Hardware. Ask us about pricing, stock, lead times, or paste a product list — we'll quote you quickly.";
+      await SupabaseChat.seedWelcomeIfEmpty(convId, welcome);
+      Chat._sbMsgs = await SupabaseChat.listMessages(convId);
+      Chat._sbLastSig = Chat._sbMsgs
+        .map((m) => m.id + "\t" + (m.timestamp || ""))
+        .join("|");
+      if (Chat._sbUnsub) Chat._sbUnsub();
+      Chat._sbUnsub = SupabaseChat.subscribeConversation(convId, async () => {
+        Chat._sbMsgs = await SupabaseChat.listMessages(convId);
+        const el = document.getElementById("chat");
+        if (el && el.classList.contains("chat--open"))
+          await SupabaseChat.markCustomerRead(convId);
+        Chat.render();
+        Chat._updateUnreadBadge();
+      });
+      /* Realtime 未开启或失败时仍定期拉取 */
+      Chat._sbPoll = setInterval(async () => {
+        if (!Chat._useSb || !Chat._convId) return;
+        try {
+          const next = await SupabaseChat.listMessages(Chat._convId);
+          const sig = next.map((m) => m.id + "\t" + (m.timestamp || "")).join("|");
+          if (sig !== Chat._sbLastSig) {
+            Chat._sbLastSig = sig;
+            Chat._sbMsgs = next;
+            const el = document.getElementById("chat");
+            if (el && el.classList.contains("chat--open"))
+              await SupabaseChat.markCustomerRead(Chat._convId);
+            Chat.render();
+            Chat._updateUnreadBadge();
+          }
+        } catch (e) {}
+      }, 4000);
+      Chat.render();
+      Chat._updateUnreadBadge();
+    } catch (err) {
+      console.error("Supabase chat init failed", err);
+      if (window.Toast)
+        Toast.show(
+          "Cloud chat unavailable — using on-device storage. " +
+            (err && err.message ? "(" + err.message + ")" : ""),
+          "info",
+        );
+      Chat._useSb = false;
+      Chat._convId = null;
+      if (Chat._sbPoll) {
+        clearInterval(Chat._sbPoll);
+        Chat._sbPoll = null;
+      }
+      Chat._initLocal();
+    }
+  },
+
+  _markReadCustomer() {
+    if (!Chat._convId) return;
+    if (Chat._useSb) void SupabaseChat.markCustomerRead(Chat._convId);
+    else DataStore.markConversationRead(Chat._convId, "customer");
+  },
+
   _onNewMessage() {
+    if (Chat._useSb) return;
     const el = document.getElementById("chat");
     const isOpen = el && el.classList.contains("chat--open");
     if (isOpen) {
       Chat.render();
-      DataStore.markConversationRead(Chat._convId, "customer");
+      Chat._markReadCustomer();
     } else {
       Chat._updateUnreadBadge();
     }
@@ -475,6 +557,27 @@ const Chat = {
   _updateUnreadBadge() {
     const badge = document.getElementById("chat-unread-badge");
     if (!badge) return;
+    if (Chat._useSb && Chat._convId) {
+      void (async () => {
+        try {
+          const sb = SupabaseChat.getClient();
+          if (!sb) return;
+          const { data } = await sb
+            .from("conversations")
+            .select("unread_customer")
+            .eq("id", Chat._convId)
+            .single();
+          const n = data && (data.unread_customer || 0);
+          if (n > 0) {
+            badge.textContent = n > 99 ? "99+" : String(n);
+            badge.style.display = "inline-flex";
+          } else {
+            badge.style.display = "none";
+          }
+        } catch (e) {}
+      })();
+      return;
+    }
     const conv = Chat._convId ? DataStore.getConversation(Chat._convId) : null;
     const n = conv ? (conv.unreadByCustomer || 0) : 0;
     if (n > 0) {
@@ -488,7 +591,7 @@ const Chat = {
   open() {
     document.getElementById("chat").classList.add("chat--open");
     Chat.render();
-    DataStore.markConversationRead(Chat._convId, "customer");
+    Chat._markReadCustomer();
     Chat._updateUnreadBadge();
     setTimeout(() => document.getElementById("chat-input")?.focus(), 100);
   },
@@ -500,7 +603,7 @@ const Chat = {
     el.classList.toggle("chat--open");
     if (el.classList.contains("chat--open")) {
       Chat.render();
-      DataStore.markConversationRead(Chat._convId, "customer");
+      Chat._markReadCustomer();
       Chat._updateUnreadBadge();
       setTimeout(() => document.getElementById("chat-input")?.focus(), 100);
     }
@@ -509,7 +612,7 @@ const Chat = {
   render() {
     const log = document.getElementById("chat-log");
     if (!log || !Chat._convId) return;
-    const msgs = DataStore.getConversationMessages(Chat._convId);
+    const msgs = Chat._useSb ? Chat._sbMsgs : DataStore.getConversationMessages(Chat._convId);
     const store = window.Layout ? Layout._getStore() : {};
     const storeName = store.name || "HOMART Sales";
     const storeInitial = storeName.charAt(0).toUpperCase();
@@ -551,6 +654,25 @@ const Chat = {
     const msg = text || (input && input.value.trim());
     if (!msg) return;
     const user = window.Auth && Auth.current();
+    if (Chat._useSb) {
+      void (async () => {
+        try {
+          await SupabaseChat.insertMessage(Chat._convId, "customer", msg, {
+            type: "text",
+          });
+          Chat._sbMsgs = await SupabaseChat.listMessages(Chat._convId);
+          Chat._sbLastSig = Chat._sbMsgs
+            .map((m) => m.id + "\t" + (m.timestamp || ""))
+            .join("|");
+          if (input) input.value = "";
+          Chat.render();
+        } catch (err) {
+          console.error(err);
+          if (window.Toast) Toast.show("Could not send message", "error");
+        }
+      })();
+      return;
+    }
     DataStore.addMessage({
       conversationId: Chat._convId,
       sender: "customer",
@@ -574,6 +696,32 @@ const Chat = {
     const p = DataStore.getProduct(productId);
     if (!p) { if (window.Toast) Toast.show("Product not found", "error"); return; }
     const user = window.Auth && Auth.current();
+    if (Chat._useSb) {
+      void (async () => {
+        try {
+          await SupabaseChat.insertMessage(
+            Chat._convId,
+            "customer",
+            `Shared product: ${p.name}`,
+            { type: "product", productId },
+          );
+          Chat._sbMsgs = await SupabaseChat.listMessages(Chat._convId);
+          Chat._sbLastSig = Chat._sbMsgs
+            .map((m) => m.id + "\t" + (m.timestamp || ""))
+            .join("|");
+          Chat.closePicker();
+          Chat.render();
+          setTimeout(() => {
+            const inp = document.getElementById("chat-input");
+            if (inp) { inp.placeholder = "Add a message about this product…"; inp.focus(); }
+          }, 80);
+        } catch (err) {
+          console.error(err);
+          if (window.Toast) Toast.show("Could not share product", "error");
+        }
+      })();
+      return;
+    }
     DataStore.addMessage({
       conversationId: Chat._convId,
       sender: "customer",
@@ -584,7 +732,6 @@ const Chat = {
     });
     Chat.closePicker();
     Chat.render();
-    // focus textarea for follow-up question
     setTimeout(() => {
       const inp = document.getElementById("chat-input");
       if (inp) { inp.placeholder = "Add a message about this product…"; inp.focus(); }

@@ -719,9 +719,12 @@
     </style>
   </head>
   <body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/data.js"></script>
     <script src="js/cart.js"></script>
+    <script src="js/supabase-chat.js"></script>
     <script src="js/merchant-layout.js"></script>
     <script>
       if (
@@ -935,7 +938,8 @@
       const state = {
         tab: "all",
         activeId: URLParams.get("c") || null,
-        conversations: [], // loaded from DataStore
+        conversations: [],
+        useSb: false,
       };
 
       /* ---------- Load conversations from DataStore ---------- */
@@ -976,6 +980,36 @@
         }
       }
 
+      async function loadFromSupabase() {
+        const rows = await SupabaseChat.listMerchantConversations();
+        const mapped = await Promise.all(
+          rows.map(async (cv) => {
+            const msgsRaw = await SupabaseChat.listMessages(cv.id);
+            return {
+              id: cv.id,
+              customerId: cv.customer_id,
+              name: cv.customer_name || "Customer",
+              phone: "",
+              location: "",
+              role: "",
+              tags: [],
+              online: false,
+              unread: (cv.unread_merchant || 0) > 0,
+              preview: cv.last_message || "",
+              previewTime: cv.last_at ? fmtRelTime(cv.last_at) : "",
+              messages: msgsRaw,
+              status: cv.status || "open",
+            };
+          }),
+        );
+        state.conversations = mapped;
+        const realIds = state.conversations.map((c) => c.id);
+        if (!state.activeId || !realIds.includes(state.activeId)) {
+          state.activeId = state.conversations[0]?.id || null;
+          _threadConvId = null;
+        }
+      }
+
       function fmtRelTime(iso) {
         const d = new Date(iso);
         const now = new Date();
@@ -990,6 +1024,7 @@
       }
 
       function isPlaceholder() {
+        if (state.useSb) return false;
         return state.conversations.length > 0 && state.conversations[0].id === "c_john";
       }
 
@@ -1105,9 +1140,8 @@
         const c = state.conversations.find((x) => x.id === id);
         if (c) {
           c.unread = false;
-          if (!isPlaceholder()) {
-            DataStore.markConversationRead(id, "merchant");
-          }
+          if (state.useSb) void SupabaseChat.markMerchantRead(id);
+          else if (!isPlaceholder()) DataStore.markConversationRead(id, "merchant");
         }
         renderList();
         renderThread();
@@ -1276,20 +1310,37 @@
         const sellerName = storeSettings.name || "HOMART Sales";
 
         if (isPlaceholder()) {
-          // demo mode: just update local state
           const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
           c.messages.push({ sender: "seller", at: now, text: txt });
           c.preview = txt.slice(0, 60);
           c.previewTime = now;
+        } else if (state.useSb) {
+          void (async () => {
+            try {
+              await SupabaseChat.insertMessage(c.id, "seller", txt, { type: "text" });
+              c.messages = await SupabaseChat.listMessages(c.id);
+              const rows = await SupabaseChat.listMerchantConversations();
+              const row = rows.find((r) => r.id === c.id);
+              if (row) {
+                c.preview = row.last_message || "";
+                c.previewTime = row.last_at ? fmtRelTime(row.last_at) : "";
+              }
+              box.value = "";
+              renderThread();
+              renderList();
+            } catch (err) {
+              console.error(err);
+              Toast.show("Send failed", "error");
+            }
+          })();
+          return;
         } else {
-          // real mode: persist to DataStore so customer sees it live
           DataStore.addMessage({
             conversationId: c.id,
             sender: "seller",
             name: sellerName,
             message: txt,
           });
-          // reload conversation with fresh messages
           const msgs = DataStore.getMessages().filter((m) => m.conversationId === c.id);
           c.messages = msgs;
           const convData = DataStore.getConversation(c.id);
@@ -1424,6 +1475,23 @@
           c.messages.push({ sender: "seller", at: now, type: "product", productId: pid.trim() });
           c.preview = `Shared: ${p.name}`;
           c.previewTime = now;
+        } else if (state.useSb) {
+          void (async () => {
+            try {
+              await SupabaseChat.insertMessage(c.id, "seller", `Shared: ${p.name}`, {
+                type: "product",
+                productId: pid.trim(),
+              });
+              c.messages = await SupabaseChat.listMessages(c.id);
+              renderThread();
+              renderList();
+              Toast.show("Product shared");
+            } catch (err) {
+              console.error(err);
+              Toast.show("Share failed", "error");
+            }
+          })();
+          return;
         } else {
           DataStore.addMessage({ conversationId: c.id, sender: "seller", name: "HOMART Sales", type: "product", productId: pid.trim(), message: `Shared: ${p.name}` });
           c.messages = DataStore.getMessages().filter((m) => m.conversationId === c.id);
@@ -1443,6 +1511,22 @@
           c.preview = `Quote: ${text.slice(0, 40)}`;
           c.previewTime = now;
           c.status = "quotation";
+        } else if (state.useSb) {
+          void (async () => {
+            try {
+              await SupabaseChat.insertMessage(c.id, "seller", text, { type: "quote" });
+              await SupabaseChat.updateConversationStatus(c.id, "quotation");
+              c.messages = await SupabaseChat.listMessages(c.id);
+              c.status = "quotation";
+              renderThread();
+              renderList();
+              Toast.show("Quote sent");
+            } catch (err) {
+              console.error(err);
+              Toast.show("Quote failed", "error");
+            }
+          })();
+          return;
         } else {
           DataStore.addMessage({ conversationId: c.id, sender: "seller", name: "HOMART Sales", type: "quote", message: text });
           DataStore.updateConversation(c.id, { status: "quotation" });
@@ -1457,7 +1541,9 @@
         const c = state.conversations.find((x) => x.id === state.activeId);
         if (!c) return;
         c.status = "resolved";
-        if (!isPlaceholder()) DataStore.updateConversation(c.id, { status: "resolved" });
+        if (state.useSb)
+          void SupabaseChat.updateConversationStatus(c.id, "resolved");
+        else if (!isPlaceholder()) DataStore.updateConversation(c.id, { status: "resolved" });
         renderList();
         Toast.show("Marked resolved");
       }
@@ -1470,21 +1556,22 @@
         return snap;
       }
 
-      function refreshFromStore() {
+      async function refreshFromStore() {
         const prevSnap = getMsgSnapshot();
         const prevActive = state.activeId;
 
-        loadConversations();
+        if (state.useSb) await loadFromSupabase();
+        else loadConversations();
         renderTabs();
         renderList();
         renderThread();
 
-        // auto-mark active conversation as read
         if (state.activeId && !isPlaceholder()) {
           const c = state.conversations.find((x) => x.id === state.activeId);
           if (c && c.unread) {
             c.unread = false;
-            DataStore.markConversationRead(state.activeId, "merchant");
+            if (state.useSb) await SupabaseChat.markMerchantRead(state.activeId);
+            else DataStore.markConversationRead(state.activeId, "merchant");
           }
         }
 
@@ -1501,32 +1588,63 @@
 
       // Cross-tab sync: customer page writes localStorage → storage event fires here
       window.addEventListener("storage", (e) => {
+        if (state.useSb) return;
         if (e.key === STORAGE_KEYS.MESSAGES || e.key === STORAGE_KEYS.CONVERSATIONS) {
-          refreshFromStore();
+          void refreshFromStore();
         }
       });
 
-      // Same-tab custom events (fired by DataStore.addMessage / saveConversations)
-      window.addEventListener("homart:messages", refreshFromStore);
-      window.addEventListener("homart:conversations", refreshFromStore);
+      window.addEventListener("homart:messages", () => {
+        if (!state.useSb) void refreshFromStore();
+      });
+      window.addEventListener("homart:conversations", () => {
+        if (!state.useSb) void refreshFromStore();
+      });
 
-      // Polling fallback — storage events can be unreliable in file:// environments
       let _pollSnap = { msgs: 0, convs: 0 };
       setInterval(() => {
+        if (state.useSb) return;
         const msgs = DataStore.getMessages().length;
         const convs = DataStore.getConversations().length;
         if (msgs !== _pollSnap.msgs || convs !== _pollSnap.convs) {
           _pollSnap = { msgs, convs };
-          refreshFromStore();
+          void refreshFromStore();
         }
       }, 1500);
 
-      /* Init */
-      loadConversations();
-      renderTabs();
-      renderList();
-      renderThread();
-      renderCust();
+      let _sbMerchantUnsub = null;
+      (async function bootMessages() {
+        if (window.SupabaseChat && SupabaseChat.isReady()) {
+          state.useSb = true;
+          try {
+            await loadFromSupabase();
+            if (_sbMerchantUnsub) _sbMerchantUnsub();
+            _sbMerchantUnsub = SupabaseChat.subscribeMerchantMessages(() => {
+              void refreshFromStore();
+            });
+            /* Realtime 未配置或失败时仍定期同步云端收件箱 */
+            setInterval(() => {
+              if (!state.useSb) return;
+              void refreshFromStore();
+            }, 4000);
+          } catch (err) {
+            console.error(err);
+            state.useSb = false;
+            Toast.show(
+              "Cloud inbox unavailable — showing local data. " +
+                (err && err.message ? "(" + err.message + ")" : ""),
+              "info",
+            );
+            loadConversations();
+          }
+        } else {
+          loadConversations();
+        }
+        renderTabs();
+        renderList();
+        renderThread();
+        renderCust();
+      })();
     </script>
   </body>
 </html>
