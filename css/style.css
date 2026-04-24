@@ -381,6 +381,7 @@ ul {
 }
 .btn--chat {
   padding: 10px 16px;
+  position: relative;
 }
 .btn--block {
   width: 100%;
@@ -2498,6 +2499,19 @@ ul {
 }
 
 /* ==========================================================================
+   Responsive — 900px (hide header text labels before overflow)
+   ========================================================================== */
+@media (max-width: 900px) {
+  .h-action span {
+    display: none;
+  }
+  .btn--chat {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+/* ==========================================================================
    Responsive — 768px (tablet / large phone landscape)
    ========================================================================== */
 @media (max-width: 768px) {
@@ -2526,16 +2540,6 @@ ul {
     grid-column: 3;
     grid-row: 1;
     gap: 4px;
-  }
-
-  /* Hide action labels, keep icons */
-  .h-action span {
-    display: none;
-  }
-  /* Shrink chat button text */
-  .btn--chat {
-    padding: 8px 12px;
-    font-size: 13px;
   }
 
   /* Category nav — already scrollable, just reduce padding */

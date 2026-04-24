@@ -114,13 +114,13 @@ const MerchantLayout = {
         </nav>
 
         <div class="m-sidebar__user">
-          <div class="m-sidebar__user-info">
+          <div class="m-sidebar__user-info" onclick="MerchantLayout.toggleUserMenu(this)">
             <div class="m-sidebar__user-avatar">${initials}</div>
             <div>
               <b>${user.name || "Admin"}</b>
               <span>${user.email || ""}</span>
             </div>
-            <button class="m-sidebar__user-caret" aria-label="Expand" onclick="MerchantLayout.toggleUserMenu(this)">
+            <button type="button" class="m-sidebar__user-caret" aria-label="Expand menu">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
           </div>
@@ -184,8 +184,12 @@ const MerchantLayout = {
     );
   },
 
-  toggleUserMenu(btn) {
-    btn.closest(".m-sidebar__user").classList.toggle("is-expanded");
+  toggleUserMenu(anchor) {
+    const root =
+      anchor && anchor.classList && anchor.classList.contains("m-sidebar__user")
+        ? anchor
+        : anchor && anchor.closest && anchor.closest(".m-sidebar__user");
+    if (root) root.classList.toggle("is-expanded");
   },
 
   doSearch(q) {

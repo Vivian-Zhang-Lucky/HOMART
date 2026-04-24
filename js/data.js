@@ -789,9 +789,22 @@ const DataStore = {
     return order;
   },
 
-  /* ---------- 客户 Session ---------- */
+  /* ---------- 客户 Session ----------
+     Auth 与 DataStore 共用 HOMART.session。登录后存的是 { user, loginAt }，需合并 user.id
+     作为 DataStore 层的稳定 id，否则聊天会话的 customerId 会变成 undefined。 */
   getSession() {
     let s = JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSION) || "null");
+    if (s && s.user && s.user.id) {
+      if (!s.id || s.id !== s.user.id) {
+        s = {
+          ...s,
+          id: s.user.id,
+          name: s.name || s.user.name,
+          email: s.email || s.user.email || "",
+        };
+        localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(s));
+      }
+    }
     if (!s) {
       s = { id: "sess_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
       localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(s));
@@ -814,6 +827,7 @@ const DataStore = {
   saveConversations(list) {
     localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list));
     window.dispatchEvent(new CustomEvent("homart:conversations"));
+    if (window.__homartSyncPost) window.__homartSyncPost("conversations");
   },
   getOrCreateConversation(customerId, customerName, customerEmail) {
     const list = this.getConversations();
@@ -833,7 +847,7 @@ const DataStore = {
         createdAt: new Date().toISOString(),
       };
       list.unshift(conv);
-      localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list));
+      this.saveConversations(list);
     }
     return conv;
   },
@@ -864,6 +878,7 @@ const DataStore = {
     list.push(msg);
     localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(list));
     window.dispatchEvent(new CustomEvent("homart:messages", { detail: msg }));
+    if (window.__homartSyncPost) window.__homartSyncPost("messages");
     // update conversation metadata
     if (msg.conversationId) {
       const convs = this.getConversations();
@@ -904,6 +919,27 @@ const DataStore = {
 window.DataStore = DataStore;
 window.STORAGE_KEYS = STORAGE_KEYS;
 window.FALLBACK_IMG = FALLBACK_IMG;
+
+/* 跨窗口/多标签同 origin 的实时同步（storage 在部分环境不可靠） */
+(function setupHomartSyncBroadcast() {
+  if (typeof BroadcastChannel === "undefined") {
+    window.__homartSyncPost = function () {};
+    return;
+  }
+  const ch = new BroadcastChannel("homart-sync");
+  ch.addEventListener("message", (ev) => {
+    const k = ev.data && ev.data.k;
+    if (k === "messages")
+      window.dispatchEvent(new CustomEvent("homart:messages", { detail: null }));
+    if (k === "conversations")
+      window.dispatchEvent(new CustomEvent("homart:conversations", { detail: null }));
+  });
+  window.__homartSyncPost = (k) => {
+    try {
+      ch.postMessage({ k, t: Date.now() });
+    } catch (e) {}
+  };
+})();
 
 /* 初始化 */
 DataStore.init();

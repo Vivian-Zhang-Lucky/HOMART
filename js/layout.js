@@ -449,9 +449,13 @@ const Chat = {
     window.addEventListener("storage", (e) => {
       if (e.key === STORAGE_KEYS.MESSAGES) Chat._onNewMessage();
     });
-    // 同页面实时监听（custom event from DataStore.addMessage）
+    // 同页 + 其他标签（BroadcastChannel 转发时 detail 为空）
     window.addEventListener("homart:messages", (e) => {
-      if (e.detail && e.detail.conversationId === Chat._convId && e.detail.sender === "seller") {
+      if (e.detail == null) {
+        Chat._onNewMessage();
+        return;
+      }
+      if (e.detail.conversationId === Chat._convId && e.detail.sender === "seller") {
         Chat._onNewMessage();
       }
     });
@@ -547,7 +551,6 @@ const Chat = {
     const msg = text || (input && input.value.trim());
     if (!msg) return;
     const user = window.Auth && Auth.current();
-    const session = DataStore.getSession();
     DataStore.addMessage({
       conversationId: Chat._convId,
       sender: "customer",
@@ -571,7 +574,6 @@ const Chat = {
     const p = DataStore.getProduct(productId);
     if (!p) { if (window.Toast) Toast.show("Product not found", "error"); return; }
     const user = window.Auth && Auth.current();
-    const session = DataStore.getSession();
     DataStore.addMessage({
       conversationId: Chat._convId,
       sender: "customer",
