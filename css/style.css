@@ -2295,13 +2295,41 @@ ul {
 }
 .chat__composer {
   display: flex;
-  gap: 10px;
-  padding: 14px;
+  flex-direction: column;
+  gap: 0;
   border-top: 1px solid var(--ink-200);
   background: white;
+}
+.chat__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px 4px;
+  border-bottom: 1px solid var(--ink-100);
+}
+.chat__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--green-700);
+  background: var(--green-50);
+  border: 1px solid var(--green-200);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.chat__tool-btn:hover { background: var(--green-100); }
+.chat__tool-btn svg { width: 14px; height: 14px; }
+.chat__input-row {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px 12px;
   align-items: flex-end;
 }
-.chat__composer textarea {
+.chat__input-row textarea {
   flex: 1;
   resize: none;
   padding: 10px 12px;
@@ -2310,15 +2338,96 @@ ul {
   outline: none;
   font-size: 14px;
   transition: border-color 0.15s;
+  font-family: inherit;
 }
-.chat__composer textarea:focus {
-  border-color: var(--green-700);
-}
-.chat__composer .btn {
+.chat__input-row textarea:focus { border-color: var(--green-700); }
+.chat__send-btn {
   width: 44px;
   height: 44px;
   padding: 0;
+  flex-shrink: 0;
 }
+
+/* Product picker panel */
+.chat__picker {
+  flex-direction: column;
+  border-top: 1px solid var(--ink-200);
+  background: white;
+  max-height: 340px;
+  overflow: hidden;
+}
+.chat__picker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-900);
+  border-bottom: 1px solid var(--ink-100);
+  flex-shrink: 0;
+}
+.chat__picker-head button {
+  background: none;
+  padding: 4px;
+  color: var(--ink-500);
+  cursor: pointer;
+  border-radius: 4px;
+}
+.chat__picker-head button:hover { background: var(--ink-100); }
+.chat__picker-head svg { width: 16px; height: 16px; }
+.chat__picker-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ink-100);
+  flex-shrink: 0;
+}
+.chat__picker-search svg { width: 15px; height: 15px; color: var(--ink-400); flex-shrink: 0; }
+.chat__picker-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  font-family: inherit;
+  background: none;
+  color: var(--ink-900);
+}
+.chat__picker-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+.chat__picker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.chat__picker-item:hover { background: var(--ink-50); }
+.chat__picker-item img {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--ink-100);
+}
+.chat__picker-item-body { flex: 1; min-width: 0; }
+.chat__picker-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat__picker-item-price { font-size: 12px; color: var(--green-700); font-weight: 600; margin-top: 2px; }
+.chat__picker-item svg { width: 14px; height: 14px; color: var(--ink-400); flex-shrink: 0; }
+.chat__picker-empty { padding: 24px; text-align: center; color: var(--ink-400); font-size: 13px; }
 
 /* ==========================================================================
    Toast

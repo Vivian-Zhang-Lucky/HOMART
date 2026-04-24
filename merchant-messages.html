@@ -1433,7 +1433,6 @@
 
       /* ---------- Real-time sync ---------- */
       function refreshFromStore(incomingMsg) {
-        if (isPlaceholder()) return; // demo mode, no sync needed
         const prevConvs = state.conversations.map((c) => c.id);
         loadConversations();
 

@@ -243,15 +243,17 @@ const Layout = {
 
   /* ---------- 悬浮聊天抽屉 ---------- */
   renderChatDrawer() {
+    const store = this._getStore();
+    const initial = (store.name || "H").charAt(0).toUpperCase();
     return `
     <div class="chat" id="chat">
       <div class="chat__backdrop" onclick="Chat.close()"></div>
       <aside class="chat__panel" role="dialog" aria-label="Chat with HOMART">
         <header class="chat__header">
           <div class="chat__agent">
-            <div class="chat__avatar">K</div>
+            <div class="chat__avatar">${initial}</div>
             <div>
-              <div class="chat__name">HOMART Sales Team <span class="chat__status"></span></div>
+              <div class="chat__name">${store.name || "HOMART"} Sales <span class="chat__status"></span></div>
               <div class="chat__sub">We reply in minutes · Bulk orders welcome</div>
             </div>
           </div>
@@ -259,12 +261,37 @@ const Layout = {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </header>
+
         <div class="chat__log" id="chat-log"></div>
+
+        <!-- Product picker panel (hidden by default) -->
+        <div class="chat__picker" id="chat-picker" style="display:none;">
+          <div class="chat__picker-head">
+            <span>Share a Product</span>
+            <button onclick="Chat.closePicker()" aria-label="Close picker">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="chat__picker-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="picker-input" type="search" placeholder="Search products…" oninput="Chat.searchProducts(this.value)" autocomplete="off">
+          </div>
+          <div class="chat__picker-list" id="picker-list"></div>
+        </div>
+
         <footer class="chat__composer">
-          <textarea id="chat-input" placeholder="Type a message… (e.g. Do you offer bulk discount on 100 pipes?)" rows="2"></textarea>
-          <button class="btn btn--primary" onclick="Chat.send()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          </button>
+          <div class="chat__toolbar">
+            <button class="chat__tool-btn" onclick="Chat.openPicker()" title="Share a product">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              Share Product
+            </button>
+          </div>
+          <div class="chat__input-row">
+            <textarea id="chat-input" placeholder="Type a message…" rows="2"></textarea>
+            <button class="btn btn--primary chat__send-btn" onclick="Chat.send()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
         </footer>
       </aside>
     </div>`;
@@ -532,18 +559,66 @@ const Chat = {
     Chat.render();
   },
 
-  /* 从产品页一键询问 */
+  /* 从产品页一键询问 — 发送产品卡片 */
   askAbout(productId) {
-    const p = DataStore.getProduct(productId);
-    if (!p) return;
     Chat.open();
+    setTimeout(() => Chat.shareProduct(productId), 150);
+  },
+
+  /* 直接发送产品卡片消息 */
+  shareProduct(productId) {
+    if (!Chat._convId) return;
+    const p = DataStore.getProduct(productId);
+    if (!p) { if (window.Toast) Toast.show("Product not found", "error"); return; }
+    const user = window.Auth && Auth.current();
+    const session = DataStore.getSession();
+    DataStore.addMessage({
+      conversationId: Chat._convId,
+      sender: "customer",
+      name: user ? (user.name || "Customer") : "Guest",
+      type: "product",
+      productId: productId,
+      message: `Shared product: ${p.name}`,
+    });
+    Chat.closePicker();
+    Chat.render();
+    // focus textarea for follow-up question
     setTimeout(() => {
-      const input = document.getElementById("chat-input");
-      if (input) {
-        input.value = `Hi, I'd like a quote for: ${p.name} (${p.sku}). What's your best price for bulk?`;
-        input.focus();
-      }
-    }, 150);
+      const inp = document.getElementById("chat-input");
+      if (inp) { inp.placeholder = "Add a message about this product…"; inp.focus(); }
+    }, 80);
+  },
+
+  /* Product picker */
+  openPicker() {
+    const picker = document.getElementById("chat-picker");
+    if (!picker) return;
+    picker.style.display = "flex";
+    Chat.searchProducts("");
+    setTimeout(() => document.getElementById("picker-input")?.focus(), 80);
+  },
+  closePicker() {
+    const picker = document.getElementById("chat-picker");
+    if (picker) picker.style.display = "none";
+  },
+  searchProducts(query) {
+    const list = document.getElementById("picker-list");
+    if (!list) return;
+    const q = (query || "").trim().toLowerCase();
+    const products = DataStore.getProducts(q ? { search: q } : {}).slice(0, 12);
+    if (products.length === 0) {
+      list.innerHTML = '<div class="chat__picker-empty">No products found</div>';
+      return;
+    }
+    list.innerHTML = products.map((p) => `
+      <div class="chat__picker-item" onclick="Chat.shareProduct('${p.id}')">
+        <img src="${p.image}" alt="" onerror="this.style.display='none'">
+        <div class="chat__picker-item-body">
+          <div class="chat__picker-item-name">${p.name}</div>
+          <div class="chat__picker-item-price">KSh ${(p.price || 0).toLocaleString()}</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>`).join("");
   },
 };
 

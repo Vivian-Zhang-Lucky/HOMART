@@ -862,7 +862,6 @@ const DataStore = {
     msg.id = "m" + Date.now().toString(36);
     msg.timestamp = msg.timestamp || new Date().toISOString();
     list.push(msg);
-    localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(msg.id)); // ping
     localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(list));
     window.dispatchEvent(new CustomEvent("homart:messages", { detail: msg }));
     // update conversation metadata
