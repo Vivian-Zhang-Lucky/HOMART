@@ -134,8 +134,12 @@ const MerchantLayout = {
 
   renderTopbar(title, headerExtra) {
     return `
+      <div class="m-sidebar-overlay" id="m-sidebar-overlay" onclick="MerchantLayout.closeSidebar()"></div>
       <header class="m-topbar">
         <div class="m-topbar__title">
+          <button class="m-hamburger" aria-label="Open menu" onclick="MerchantLayout.openSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
           ${headerExtra || ""}
           <h1>${title}</h1>
         </div>
@@ -148,7 +152,7 @@ const MerchantLayout = {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <span class="m-icon-btn__dot" id="m-notif-dot" hidden></span>
           </button>
-          <button class="m-icon-btn" aria-label="Help" onclick="Toast.show('Help centre coming soon')">
+          <button class="m-icon-btn m-help-btn" aria-label="Help" onclick="Toast.show('Help centre coming soon')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12" y2="17"/></svg>
           </button>
           <button class="m-status-toggle" id="m-store-status" onclick="MerchantLayout.toggleStore(this)">
@@ -199,6 +203,15 @@ const MerchantLayout = {
   },
 
   /* 侧边栏徽章: 未读消息 + 待处理订单 */
+  openSidebar() {
+    document.querySelector(".m-sidebar")?.classList.add("is-open");
+    document.getElementById("m-sidebar-overlay")?.classList.add("is-visible");
+  },
+  closeSidebar() {
+    document.querySelector(".m-sidebar")?.classList.remove("is-open");
+    document.getElementById("m-sidebar-overlay")?.classList.remove("is-visible");
+  },
+
   refreshBadges() {
     const msgBadge = document.querySelector('[data-badge="msg"]');
     const orderBadge = document.querySelector('[data-badge="order"]');

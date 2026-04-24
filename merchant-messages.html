@@ -1112,6 +1112,12 @@
         renderList();
         renderThread();
         renderCust();
+        // On mobile: show thread as full-screen overlay
+        document.getElementById("thread")?.classList.add("is-open");
+      }
+
+      function closeThreadMobile() {
+        document.getElementById("thread")?.classList.remove("is-open");
       }
 
       /* ---------- Thread ---------- */
@@ -1149,6 +1155,9 @@
         thread.innerHTML = `
         <div class="m-thread__head">
           <div class="m-thread__contact">
+            <button class="m-thread__back" onclick="closeThreadMobile()" aria-label="Back" style="display:none;margin-right:8px;background:none;padding:4px;color:var(--ink-700);border-radius:6px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
             <div class="m-thread__avatar">${initials(c.name)}</div>
             <div>
               <div class="m-thread__name">${c.name}</div>

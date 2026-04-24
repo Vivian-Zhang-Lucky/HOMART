@@ -2475,10 +2475,13 @@ ul {
 /* ==========================================================================
    Responsive
    ========================================================================== */
-@media (max-width: 1200px) {
+/* ==========================================================================
+   Responsive — 1100px (large tablet / small laptop)
+   ========================================================================== */
+@media (max-width: 1100px) {
   .product-grid,
   .results-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
   .cat-tiles {
     grid-template-columns: repeat(4, 1fr);
@@ -2487,27 +2490,103 @@ ul {
     grid-template-columns: 1fr 1fr 1fr;
   }
   .pdp {
-    grid-template-columns: 90px 1fr 1fr;
+    grid-template-columns: 80px 1fr 1fr;
   }
   .pdp__assist {
     grid-column: 1 / -1;
   }
 }
-@media (max-width: 900px) {
-  .header-main__inner {
-    grid-template-columns: 1fr;
-    gap: 12px;
+
+/* ==========================================================================
+   Responsive — 768px (tablet / large phone landscape)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Container padding */
+  .container {
+    padding: 0 16px;
   }
-  .search {
+
+  /* Header: keep logo-left / actions-right on one row, search below */
+  .header-main__inner {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 10px 12px;
+    padding: 12px 16px;
+  }
+  .header-main__inner .logo {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .header-main__inner .search {
+    grid-column: 1 / -1;
+    grid-row: 2;
     max-width: none;
   }
+  .header-main__inner .header-actions {
+    grid-column: 3;
+    grid-row: 1;
+    gap: 4px;
+  }
+
+  /* Hide action labels, keep icons */
   .h-action span {
     display: none;
   }
+  /* Shrink chat button text */
+  .btn--chat {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* Category nav — already scrollable, just reduce padding */
+  .nav__link {
+    padding: 12px 12px;
+    font-size: 13.5px;
+  }
+
+  /* Logo */
+  .logo__name {
+    font-size: 24px;
+  }
+  .logo__tagline {
+    font-size: 11px;
+  }
+
+  /* Hero */
+  .hero {
+    margin-top: 16px;
+    border-radius: var(--r-lg);
+  }
   .hero__inner {
     grid-template-columns: 1fr;
-    padding: 32px 24px;
+    padding: 32px 28px;
+    gap: 0;
   }
+  .hero__image {
+    display: none;
+  }
+  .hero__lede {
+    max-width: 100%;
+    font-size: 15px;
+  }
+  .hero__actions {
+    flex-wrap: wrap;
+  }
+  .hero__trust {
+    gap: 16px;
+  }
+
+  /* Product / category grids */
+  .product-grid,
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .cat-tiles {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Category page layout */
   .cat-hero {
     grid-template-columns: 1fr;
   }
@@ -2517,27 +2596,8 @@ ul {
   .filters {
     position: static;
   }
-  .cart-layout {
-    grid-template-columns: 1fr;
-  }
-  .summary {
-    position: static;
-  }
-  .product-grid,
-  .results-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .cat-tiles {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .footer__inner {
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    padding: 36px 24px 24px;
-  }
-  .trustbar__grid {
-    grid-template-columns: 1fr 1fr;
-  }
+
+  /* PDP */
   .pdp {
     grid-template-columns: 1fr;
   }
@@ -2546,18 +2606,26 @@ ul {
     order: 2;
   }
   .pdp__thumb {
-    width: 72px;
+    width: 64px;
     flex-shrink: 0;
+  }
+  .specs-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  /* Cart */
+  .cart-layout {
+    grid-template-columns: 1fr;
+  }
+  .summary {
+    position: static;
   }
   .form-grid {
     grid-template-columns: 1fr;
   }
   .pay-grid {
     grid-template-columns: 1fr 1fr;
-  }
-  .specs-grid {
-    grid-template-columns: 1fr;
-    gap: 0;
   }
   .checkout-hd {
     flex-direction: column;
@@ -2566,40 +2634,176 @@ ul {
   .steps {
     flex-wrap: wrap;
   }
+
+  /* Trustbar */
+  .trustbar__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Footer */
+  .footer__inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    padding: 32px 16px 20px;
+  }
+
+  /* CTA band */
+  .cta-band {
+    padding: 20px 20px;
+  }
+  .cta-band__actions {
+    flex-wrap: wrap;
+  }
+
+  /* Chat drawer: full-screen on mobile */
+  .chat__panel {
+    width: 100vw;
+  }
 }
-@media (max-width: 560px) {
+
+/* ==========================================================================
+   Responsive — 480px (phone)
+   ========================================================================== */
+@media (max-width: 480px) {
+  /* Topbar: hide to save vertical space */
   .topbar {
     display: none;
   }
-  .cat-tiles {
-    grid-template-columns: repeat(2, 1fr);
+
+  /* Container */
+  .container {
+    padding: 0 12px;
   }
-  .product-grid,
-  .results-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+
+  /* Header */
+  .header-main__inner {
+    padding: 10px 12px;
+    gap: 8px 8px;
   }
-  .pay-grid {
-    grid-template-columns: 1fr;
+  .logo__name {
+    font-size: 22px;
   }
-  .trustbar__grid {
-    grid-template-columns: 1fr;
+  .logo__tagline {
+    display: none;
   }
-  .footer__inner {
-    grid-template-columns: 1fr;
+  /* Chat button: icon only */
+  .btn--chat {
+    padding: 8px 10px;
+    font-size: 0;        /* hide text */
+    gap: 0;
+  }
+  .btn--chat svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Category nav */
+  .nav__link {
+    padding: 10px 10px;
+    font-size: 13px;
+  }
+
+  /* Hero */
+  .hero__inner {
+    padding: 24px 16px;
   }
   .hero__title {
-    font-size: 28px;
+    font-size: 26px;
   }
+  .hero__lede {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  .hero__trust {
+    display: none;
+  }
+
+  /* Section headings */
+  .section-head {
+    margin-bottom: 14px;
+  }
+  .section-head h2 {
+    font-size: 20px;
+  }
+
+  /* Product grid */
+  .product-grid,
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .cat-tiles {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  /* Product card */
+  .p-card__name {
+    font-size: 13px;
+  }
+  .p-card__price {
+    font-size: 16px;
+  }
+
+  /* PDP price */
   .pdp__price {
     font-size: 26px;
   }
+
+  /* Category hero */
   .cat-hero__text {
-    padding: 28px 20px;
+    padding: 24px 16px;
   }
   .cat-hero__text h1 {
-    font-size: 28px;
+    font-size: 24px;
   }
+
+  /* Trustbar: single column */
+  .trustbar__grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* CTA band */
+  .cta-band {
+    padding: 18px 16px;
+    gap: 14px;
+  }
+  .cta-band__left {
+    gap: 12px;
+  }
+  .cta-band__icon {
+    width: 40px;
+    height: 40px;
+  }
+  .cta-band__text b {
+    font-size: 14px;
+  }
+  .cta-band__actions {
+    width: 100%;
+  }
+  .cta-band__actions .btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  /* Footer: single column */
+  .footer__inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 28px 12px 16px;
+  }
+  .footer__meta-inner {
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  /* Cart table: stacked rows */
   .cart-table thead {
     display: none;
   }
@@ -2617,6 +2821,54 @@ ul {
   .cart-table td {
     padding: 6px 0;
     border: 0;
+  }
+
+  /* Payment grid */
+  .pay-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Chat drawer full screen, taller composer */
+  .chat__panel {
+    width: 100vw;
+    border-radius: 0;
+  }
+  .chat__log {
+    padding: 14px 12px;
+  }
+  .chat__toolbar {
+    padding: 6px 10px 4px;
+  }
+  .chat__input-row {
+    padding: 8px 10px 10px;
+  }
+}
+
+/* ==========================================================================
+   Responsive — 360px (small phone)
+   ========================================================================== */
+@media (max-width: 360px) {
+  .header-main__inner {
+    padding: 8px 10px;
+  }
+  .logo__name {
+    font-size: 20px;
+  }
+  .header-actions {
+    gap: 2px;
+  }
+  .h-action {
+    padding: 6px 8px;
+  }
+  .h-action svg {
+    width: 18px;
+    height: 18px;
+  }
+  .product-grid,
+  .results-grid,
+  .cat-tiles {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 }
 
