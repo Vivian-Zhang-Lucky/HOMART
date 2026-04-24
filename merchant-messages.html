@@ -968,8 +968,11 @@
           };
         });
 
-        if (!state.activeId && state.conversations.length > 0) {
-          state.activeId = state.conversations[0].id;
+        // reset activeId if it pointed to placeholder data or an id that no longer exists
+        const realIds = state.conversations.map((c) => c.id);
+        if (!state.activeId || !realIds.includes(state.activeId)) {
+          state.activeId = state.conversations[0]?.id || null;
+          _threadConvId = null; // force full thread rebuild
         }
       }
 
@@ -1112,10 +1115,14 @@
       }
 
       /* ---------- Thread ---------- */
+      let _threadConvId = null; // track which conversation is currently rendered
+
       function renderThread() {
         const c = state.conversations.find((x) => x.id === state.activeId);
         const thread = document.getElementById("thread");
+
         if (!c) {
+          _threadConvId = null;
           thread.innerHTML = `
           <div class="m-thread__empty">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1124,6 +1131,21 @@
           </div>`;
           return;
         }
+
+        // If same conversation already rendered, only refresh the message body
+        // to avoid clearing the merchant's in-progress reply text
+        if (_threadConvId === c.id) {
+          const body = document.getElementById("t-body");
+          if (body) {
+            const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
+            body.innerHTML = renderMessageList(c.messages);
+            if (atBottom) body.scrollTop = body.scrollHeight;
+          }
+          return;
+        }
+
+        // Full render (new conversation selected)
+        _threadConvId = c.id;
         thread.innerHTML = `
         <div class="m-thread__head">
           <div class="m-thread__contact">
@@ -1432,48 +1454,63 @@
       }
 
       /* ---------- Real-time sync ---------- */
-      function refreshFromStore(incomingMsg) {
-        const prevConvs = state.conversations.map((c) => c.id);
+      // snapshot of message counts per conversation, for detecting new arrivals
+      function getMsgSnapshot() {
+        const snap = {};
+        state.conversations.forEach((c) => { snap[c.id] = (c.messages || []).length; });
+        return snap;
+      }
+
+      function refreshFromStore() {
+        const prevSnap = getMsgSnapshot();
+        const prevActive = state.activeId;
+
         loadConversations();
-
-        // check if a new conversation arrived
-        const newConvIds = state.conversations.map((c) => c.id).filter((id) => !prevConvs.includes(id));
-
         renderTabs();
         renderList();
+        renderThread();
 
-        // if active conversation got a new message, refresh thread
-        if (incomingMsg && incomingMsg.conversationId === state.activeId) {
+        // auto-mark active conversation as read
+        if (state.activeId && !isPlaceholder()) {
           const c = state.conversations.find((x) => x.id === state.activeId);
-          if (c) {
+          if (c && c.unread) {
             c.unread = false;
             DataStore.markConversationRead(state.activeId, "merchant");
           }
-          renderThread();
         }
 
-        // show notification for new messages not in active conv
-        if (incomingMsg && incomingMsg.conversationId !== state.activeId && incomingMsg.sender === "customer") {
-          const c = state.conversations.find((x) => x.id === incomingMsg.conversationId);
-          const name = c ? c.name : "A customer";
-          Toast.show(`New message from ${name}`);
-        }
+        // toast for new messages in non-active conversations
+        state.conversations.forEach((conv) => {
+          if (conv.id === state.activeId) return;
+          const prev = prevSnap[conv.id] ?? -1;
+          const now = (conv.messages || []).length;
+          if (now > prev && prev >= 0) {
+            Toast.show(`New message from ${conv.name || "a customer"}`);
+          }
+        });
       }
 
-      // Cross-tab: customer page sends message → storage event fires here
+      // Cross-tab sync: customer page writes localStorage → storage event fires here
       window.addEventListener("storage", (e) => {
         if (e.key === STORAGE_KEYS.MESSAGES || e.key === STORAGE_KEYS.CONVERSATIONS) {
-          refreshFromStore(null);
+          refreshFromStore();
         }
       });
 
-      // Same-tab (less common but covers edge cases)
-      window.addEventListener("homart:messages", (e) => {
-        refreshFromStore(e.detail || null);
-      });
-      window.addEventListener("homart:conversations", () => {
-        if (!isPlaceholder()) { loadConversations(); renderTabs(); renderList(); }
-      });
+      // Same-tab custom events (fired by DataStore.addMessage / saveConversations)
+      window.addEventListener("homart:messages", refreshFromStore);
+      window.addEventListener("homart:conversations", refreshFromStore);
+
+      // Polling fallback — storage events can be unreliable in file:// environments
+      let _pollSnap = { msgs: 0, convs: 0 };
+      setInterval(() => {
+        const msgs = DataStore.getMessages().length;
+        const convs = DataStore.getConversations().length;
+        if (msgs !== _pollSnap.msgs || convs !== _pollSnap.convs) {
+          _pollSnap = { msgs, convs };
+          refreshFromStore();
+        }
+      }, 1500);
 
       /* Init */
       loadConversations();
