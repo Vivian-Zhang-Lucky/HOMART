@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings · HOMART Merchant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/merchant.css" />
+    <style>
+      .m-settings-grid {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 20px;
+      }
+      .m-settings-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .m-settings-nav a {
+        padding: 10px 14px;
+        border-radius: var(--r-md);
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--ink-700);
+        cursor: pointer;
+      }
+      .m-settings-nav a.is-active {
+        background: var(--green-50);
+        color: var(--green-700);
+        font-weight: 600;
+      }
+      .m-settings-nav a:hover {
+        background: var(--ink-50);
+        color: var(--ink-900);
+      }
+
+      .m-set-field {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 16px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--ink-100);
+        align-items: flex-start;
+      }
+      .m-set-field:last-child {
+        border-bottom: 0;
+      }
+      .m-set-field > div:first-child b {
+        display: block;
+        font-size: 13.5px;
+        color: var(--ink-900);
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .m-set-field > div:first-child span {
+        font-size: 12.5px;
+        color: var(--ink-500);
+      }
+      .m-set-field input,
+      .m-set-field select,
+      .m-set-field textarea {
+        width: 100%;
+        max-width: 420px;
+        padding: 10px 12px;
+        min-height: 40px;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-md);
+        font-family: inherit;
+        font-size: 13.5px;
+      }
+      .m-set-field input:focus,
+      .m-set-field select:focus {
+        outline: 0;
+        border-color: var(--green-700);
+        box-shadow: 0 0 0 3px rgba(30, 74, 52, 0.12);
+      }
+
+      .m-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+      .m-switch input {
+        display: none;
+      }
+      .m-switch__track {
+        width: 38px;
+        height: 22px;
+        border-radius: 12px;
+        background: var(--ink-200);
+        position: relative;
+        transition: background 0.2s;
+      }
+      .m-switch__track::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: white;
+        transition: transform 0.2s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+      .m-switch input:checked + .m-switch__track {
+        background: var(--green-700);
+      }
+      .m-switch input:checked + .m-switch__track::after {
+        transform: translateX(16px);
+      }
+
+      .m-danger-zone {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        border-radius: var(--r-md);
+        padding: 16px;
+        margin-top: 16px;
+      }
+      .m-danger-zone b {
+        display: block;
+        color: #991b1b;
+        font-size: 13.5px;
+        margin-bottom: 4px;
+      }
+      .m-danger-zone p {
+        font-size: 12.5px;
+        color: #7f1d1d;
+        margin-bottom: 12px;
+      }
+      @media (max-width: 900px) {
+        .m-settings-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/merchant-layout.js"></script>
+    <script>
+      if (!MerchantLayout.render({ active: "settings", title: "Settings" }))
+        throw new Error("redirect");
+
+      const STORE = JSON.parse(
+        localStorage.getItem("HOMART.storeSettings") || "null",
+      ) || {
+        name: "HOMART Hardware",
+        tagline: "Built for quality. Built for Kenya.",
+        phone: "+254 700 123 456",
+        email: "sales@HOMARThardware.co.ke",
+        whatsapp: "+254 700 123 456",
+        address: "Industrial Area, Nairobi, Kenya",
+        currency: "KSh",
+        deliveryFee: 800,
+        tax: 0,
+        moq: 1,
+        notifyNewOrder: true,
+        notifyNewChat: true,
+        autoReply: true,
+      };
+
+      function saveStore() {
+        localStorage.setItem("HOMART.storeSettings", JSON.stringify(STORE));
+        Toast.show("Settings saved");
+      }
+
+      const user = Auth.current();
+
+      document.getElementById("m-content").innerHTML = `
+      <div class="m-settings-grid">
+        <nav class="m-settings-nav">
+          <a class="is-active" onclick="showTab(this,'tab-store')">Store Info</a>
+          <a onclick="showTab(this,'tab-pay')">Payments &amp; Delivery</a>
+          <a onclick="showTab(this,'tab-notif')">Notifications</a>
+          <a onclick="showTab(this,'tab-acct')">My Account</a>
+          <a onclick="showTab(this,'tab-data')">Data Management</a>
+        </nav>
+
+        <div>
+          <!-- Store Info -->
+          <div class="m-panel" id="tab-store">
+            <div class="m-form-head" style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:4px">Store Information</div>
+            <p style="color:var(--ink-500);font-size:13px;margin-bottom:16px">Public details shown on the customer-facing site.</p>
+
+            <div class="m-set-field">
+              <div><b>Store Name</b><span>Shown in headers, emails and invoices.</span></div>
+              <input type="text" value="${escapeAttr(STORE.name)}" onchange="STORE.name=this.value">
+            </div>
+            <div class="m-set-field">
+              <div><b>Tagline</b><span>Short brand slogan.</span></div>
+              <input type="text" value="${escapeAttr(STORE.tagline)}" onchange="STORE.tagline=this.value">
+            </div>
+            <div class="m-set-field">
+              <div><b>Contact phone</b><span>Shown on product pages and in chat.</span></div>
+              <input type="tel" value="${escapeAttr(STORE.phone)}" onchange="STORE.phone=this.value">
+            </div>
+            <div class="m-set-field">
+              <div><b>WhatsApp</b><span>Number used for the "Chat on WhatsApp" buttons.</span></div>
+              <input type="tel" value="${escapeAttr(STORE.whatsapp)}" onchange="STORE.whatsapp=this.value">
+            </div>
+            <div class="m-set-field">
+              <div><b>Email</b><span>For order confirmations &amp; customer enquiries.</span></div>
+              <input type="email" value="${escapeAttr(STORE.email)}" onchange="STORE.email=this.value">
+            </div>
+            <div class="m-set-field">
+              <div><b>Business address</b><span>Shown on invoices and the contact page.</span></div>
+              <textarea rows="2" onchange="STORE.address=this.value">${escapeHtml(STORE.address)}</textarea>
+            </div>
+
+            <div style="margin-top:16px;display:flex;justify-content:flex-end">
+              <button class="btn btn--primary" onclick="saveStore()">Save Changes</button>
+            </div>
+          </div>
+
+          <!-- Payments & Delivery -->
+          <div class="m-panel" id="tab-pay" style="display:none">
+            <div class="m-form-head" style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:4px">Payments &amp; Delivery</div>
+            <p style="color:var(--ink-500);font-size:13px;margin-bottom:16px">Default pricing rules applied at checkout.</p>
+
+            <div class="m-set-field">
+              <div><b>Currency</b><span>Used for all prices.</span></div>
+              <select onchange="STORE.currency=this.value">
+                <option value="KSh" ${STORE.currency === "KSh" ? "selected" : ""}>KSh — Kenyan Shilling</option>
+                <option value="USD" ${STORE.currency === "USD" ? "selected" : ""}>USD — US Dollar</option>
+              </select>
+            </div>
+            <div class="m-set-field">
+              <div><b>Default delivery fee</b><span>Applied to standard orders.</span></div>
+              <input type="number" min="0" value="${STORE.deliveryFee}" onchange="STORE.deliveryFee=parseFloat(this.value)||0">
+            </div>
+            <div class="m-set-field">
+              <div><b>Tax (%)</b><span>VAT or sales tax rate.</span></div>
+              <input type="number" min="0" max="100" value="${STORE.tax}" onchange="STORE.tax=parseFloat(this.value)||0">
+            </div>
+            <div class="m-set-field">
+              <div><b>Default Minimum Order Qty</b><span>Per product MOQ overrides this.</span></div>
+              <input type="number" min="1" value="${STORE.moq}" onchange="STORE.moq=parseInt(this.value)||1">
+            </div>
+
+            <div style="margin-top:16px;display:flex;justify-content:flex-end">
+              <button class="btn btn--primary" onclick="saveStore()">Save Changes</button>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="m-panel" id="tab-notif" style="display:none">
+            <div class="m-form-head" style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:4px">Notifications</div>
+            <p style="color:var(--ink-500);font-size:13px;margin-bottom:16px">Get alerted when customers interact with your store.</p>
+
+            <div class="m-set-field">
+              <div><b>New order alerts</b><span>Show a notification when an order is placed.</span></div>
+              <label class="m-switch">
+                <input type="checkbox" ${STORE.notifyNewOrder ? "checked" : ""} onchange="STORE.notifyNewOrder=this.checked">
+                <span class="m-switch__track"></span>
+              </label>
+            </div>
+            <div class="m-set-field">
+              <div><b>New chat alerts</b><span>Notify me when a customer sends a message.</span></div>
+              <label class="m-switch">
+                <input type="checkbox" ${STORE.notifyNewChat ? "checked" : ""} onchange="STORE.notifyNewChat=this.checked">
+                <span class="m-switch__track"></span>
+              </label>
+            </div>
+            <div class="m-set-field">
+              <div><b>Auto‑reply while offline</b><span>Send an automatic acknowledgement when a new chat arrives.</span></div>
+              <label class="m-switch">
+                <input type="checkbox" ${STORE.autoReply ? "checked" : ""} onchange="STORE.autoReply=this.checked">
+                <span class="m-switch__track"></span>
+              </label>
+            </div>
+
+            <div style="margin-top:16px;display:flex;justify-content:flex-end">
+              <button class="btn btn--primary" onclick="saveStore()">Save Changes</button>
+            </div>
+          </div>
+
+          <!-- My Account -->
+          <div class="m-panel" id="tab-acct" style="display:none">
+            <div class="m-form-head" style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:4px">My Account</div>
+            <p style="color:var(--ink-500);font-size:13px;margin-bottom:16px">Your personal merchant account credentials.</p>
+
+            <div class="m-set-field">
+              <div><b>Full name</b><span>Displayed in messages and the admin bar.</span></div>
+              <input type="text" id="acct-name" value="${escapeAttr(user.name || "")}">
+            </div>
+            <div class="m-set-field">
+              <div><b>Email</b><span>Used to sign in.</span></div>
+              <input type="email" id="acct-email" value="${escapeAttr(user.email || "")}">
+            </div>
+            <div class="m-set-field">
+              <div><b>Phone</b><span>Optional.</span></div>
+              <input type="tel" id="acct-phone" value="${escapeAttr(user.phone || "")}">
+            </div>
+            <div class="m-set-field">
+              <div><b>New password</b><span>Leave blank to keep the current password.</span></div>
+              <input type="password" id="acct-password" placeholder="••••••••">
+            </div>
+
+            <div style="margin-top:16px;display:flex;justify-content:flex-end">
+              <button class="btn btn--primary" onclick="saveAccount()">Save Account</button>
+            </div>
+          </div>
+
+          <!-- Data Management -->
+          <div class="m-panel" id="tab-data" style="display:none">
+            <div class="m-form-head" style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:4px">Data Management</div>
+            <p style="color:var(--ink-500);font-size:13px;margin-bottom:16px">Export, import or reset your store data.</p>
+
+            <div class="m-set-field">
+              <div><b>Export all data</b><span>Download a JSON backup of products, categories, orders and messages.</span></div>
+              <div><button class="btn btn--secondary" onclick="exportAll()">Download backup</button></div>
+            </div>
+            <div class="m-set-field">
+              <div><b>Import data</b><span>Restore from a previously exported backup file.</span></div>
+              <div>
+                <input type="file" id="import-file" accept=".json" hidden onchange="importAll(event)">
+                <button class="btn btn--secondary" onclick="document.getElementById('import-file').click()">Choose backup…</button>
+              </div>
+            </div>
+
+            <div class="m-danger-zone">
+              <b>Reset store data</b>
+              <p>This will remove all products, categories, orders and messages, then re‑seed with the original sample data. Your account will not be affected.</p>
+              <button class="m-btn-danger" onclick="resetData()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                Reset All Store Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+      function escapeHtml(s) {
+        return String(s || "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[m],
+        );
+      }
+      function escapeAttr(s) {
+        return escapeHtml(s);
+      }
+
+      function showTab(link, id) {
+        document
+          .querySelectorAll(".m-settings-nav a")
+          .forEach((a) => a.classList.remove("is-active"));
+        link.classList.add("is-active");
+        ["tab-store", "tab-pay", "tab-notif", "tab-acct", "tab-data"].forEach(
+          (t) => {
+            document.getElementById(t).style.display = t === id ? "" : "none";
+          },
+        );
+      }
+
+      function saveAccount() {
+        const patch = {
+          name: document.getElementById("acct-name").value.trim(),
+          email: document
+            .getElementById("acct-email")
+            .value.trim()
+            .toLowerCase(),
+          phone: document.getElementById("acct-phone").value.trim(),
+        };
+        const pwd = document.getElementById("acct-password").value;
+        if (pwd) {
+          if (pwd.length < 6) {
+            Toast.show("Password must be at least 6 characters", "error");
+            return;
+          }
+          patch.password = pwd;
+        }
+        const res = Auth.updateProfile(patch);
+        if (!res.ok) {
+          Toast.show(res.error || "Could not save", "error");
+          return;
+        }
+        Toast.show("Account updated");
+      }
+
+      function exportAll() {
+        const dump = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          categories: DataStore.getCategories(),
+          products: DataStore.getProducts(),
+          orders: DataStore.getOrders(),
+          messages: DataStore.getMessages(),
+          storeSettings: STORE,
+        };
+        const blob = new Blob([JSON.stringify(dump, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `HOMART-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 500);
+        Toast.show("Backup downloaded");
+      }
+
+      async function importAll(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!confirm("This will overwrite existing store data. Continue?"))
+          return;
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          if (data.categories)
+            localStorage.setItem(
+              STORAGE_KEYS.CATEGORIES,
+              JSON.stringify(data.categories),
+            );
+          if (data.products)
+            localStorage.setItem(
+              STORAGE_KEYS.PRODUCTS,
+              JSON.stringify(data.products),
+            );
+          if (data.orders)
+            localStorage.setItem(
+              STORAGE_KEYS.ORDERS,
+              JSON.stringify(data.orders),
+            );
+          if (data.messages)
+            localStorage.setItem(
+              STORAGE_KEYS.MESSAGES,
+              JSON.stringify(data.messages),
+            );
+          if (data.storeSettings)
+            localStorage.setItem(
+              "HOMART.storeSettings",
+              JSON.stringify(data.storeSettings),
+            );
+          Toast.show("Data imported");
+          setTimeout(() => location.reload(), 500);
+        } catch (err) {
+          Toast.show("Invalid backup file", "error");
+        }
+      }
+
+      function resetData() {
+        if (
+          !confirm(
+            "Reset all store data to the sample dataset? This cannot be undone.",
+          )
+        )
+          return;
+        DataStore.resetAll();
+        Toast.show("Store data reset");
+        setTimeout(() => location.reload(), 500);
+      }
+    </script>
+  </body>
+</html>

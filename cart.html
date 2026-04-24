@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Cart &amp; Checkout · HOMART Hardware</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="header-slot"></div>
+
+    <main>
+      <div class="container">
+        <!-- Header + Steps -->
+        <div class="checkout-hd">
+          <div>
+            <h1>Shopping Cart &amp; Checkout</h1>
+            <p>
+              Review your items, provide delivery details and complete your
+              order.
+            </p>
+          </div>
+          <div class="steps" id="steps"></div>
+        </div>
+
+        <div id="checkout-body"></div>
+      </div>
+    </main>
+
+    <div id="footer-slot"></div>
+    <div id="trustbar-slot" hidden></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/layout.js"></script>
+    <script>
+      Layout.render("");
+
+      /* ---------- State ---------- */
+      const DELIVERY_FEE = 800;
+      const KENYA_COUNTIES = [
+        "Nairobi",
+        "Mombasa",
+        "Kisumu",
+        "Nakuru",
+        "Uasin Gishu",
+        "Kiambu",
+        "Machakos",
+        "Kajiado",
+        "Kilifi",
+        "Kwale",
+        "Meru",
+        "Nyeri",
+        "Murang'a",
+        "Kisii",
+        "Kakamega",
+        "Bungoma",
+        "Trans Nzoia",
+        "Kericho",
+        "Bomet",
+        "Narok",
+        "Turkana",
+        "Garissa",
+        "Wajir",
+        "Mandera",
+        "Marsabit",
+        "Isiolo",
+        "Samburu",
+        "Laikipia",
+        "Nyandarua",
+        "Kirinyaga",
+        "Embu",
+        "Tharaka-Nithi",
+        "Tana River",
+        "Lamu",
+        "Taita-Taveta",
+        "Makueni",
+        "Nyamira",
+        "Homa Bay",
+        "Migori",
+        "Siaya",
+        "Vihiga",
+        "Busia",
+        "Elgeyo-Marakwet",
+        "Baringo",
+        "West Pokot",
+        "Nandi",
+      ];
+      const CITIES_BY_COUNTY = {
+        Nairobi: [
+          "Westlands",
+          "Karen",
+          "Kilimani",
+          "Lavington",
+          "Eastleigh",
+          "Kasarani",
+          "Embakasi",
+          "CBD",
+        ],
+        Mombasa: [
+          "Nyali",
+          "Bamburi",
+          "Likoni",
+          "Changamwe",
+          "Kisauni",
+          "Mvita",
+        ],
+        Kisumu: ["Kisumu Central", "Kondele", "Nyalenda", "Milimani"],
+        Nakuru: ["Nakuru Town", "Naivasha", "Gilgil", "Molo"],
+        Kiambu: ["Thika", "Ruiru", "Kikuyu", "Limuru", "Juja"],
+      };
+
+      const state = {
+        step: 1, // 1=Cart 2=Delivery 3=Payment 4=Confirm
+        payment: "mpesa", // mpesa | bank | card | quote
+        form: {
+          name: "",
+          phone: "",
+          email: "",
+          address: "",
+          county: "",
+          city: "",
+          notes: "",
+          saveInfo: true,
+        },
+      };
+
+      /* Restore saved info */
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem("HOMART.checkoutInfo") || "null",
+        );
+        if (saved) Object.assign(state.form, saved);
+      } catch (e) {}
+
+      /* ---------- Render steps ---------- */
+      function renderSteps() {
+        const steps = [
+          { n: 1, label: "Cart" },
+          { n: 2, label: "Delivery" },
+          { n: 3, label: "Payment" },
+          { n: 4, label: "Confirm" },
+        ];
+        document.getElementById("steps").innerHTML = steps
+          .map((s, i) => {
+            const cls =
+              s.n < state.step
+                ? "is-done"
+                : s.n === state.step
+                  ? "is-active"
+                  : "";
+            const line =
+              i < steps.length - 1 ? '<span class="step__line"></span>' : "";
+            return `<div class="step ${cls}">
+                  <span class="step__num">${s.n < state.step ? "✓" : s.n}</span>
+                  <span class="step__label">${s.label}</span>
+                </div>${line}`;
+          })
+          .join("");
+      }
+
+      /* ---------- Totals ---------- */
+      function totals() {
+        const items = Cart.detailed();
+        const subtotal = items.reduce((a, r) => a + r.subtotal, 0);
+        const hasItems = items.length > 0;
+        const delivery = hasItems ? DELIVERY_FEE : 0;
+        const tax = 0;
+        return {
+          items,
+          subtotal,
+          delivery,
+          tax,
+          total: subtotal + delivery + tax,
+          count: items.reduce((a, r) => a + r.qty, 0),
+        };
+      }
+
+      /* ---------- Order summary (right column) ---------- */
+      function renderSummaryPanel() {
+        const t = totals();
+        const actionBtn =
+          {
+            1: `<button class="btn btn--primary" onclick="gotoStep(2)" ${t.count ? "" : "disabled"}>
+              Proceed to Delivery
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>`,
+            2: `<button class="btn btn--primary" onclick="gotoStep(3)">
+              Proceed to Payment
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>`,
+            3: `<button class="btn btn--primary" onclick="placeOrder()">
+              Place Order
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>`,
+          }[state.step] || "";
+
+        return `
+        <div class="summary">
+          <div class="summary-panel">
+            <h3>Order Summary</h3>
+            <div class="summary-row"><b>Subtotal (${t.count} items)</b><span>${fmtKSh(t.subtotal)}</span></div>
+            <div class="summary-row"><b>Estimated Delivery</b><span>${t.delivery ? fmtKSh(t.delivery) : "—"}</span></div>
+            <div class="summary-row"><b>Tax (0%)</b><span>${fmtKSh(t.tax)}</span></div>
+            <div class="summary-total"><b>Total</b><span>${fmtKSh(t.total)}</span></div>
+            <p class="summary-note">Taxes included. Final delivery cost calculated at checkout.</p>
+            ${actionBtn}
+          </div>
+
+          <div class="assist-chat-panel">
+            <h4>Need to discuss price or bulk order?</h4>
+            <p>Chat with us now. Our team is ready to help with quotations, bulk pricing and product advice.</p>
+            <div class="btn-grid">
+              <button class="btn btn--secondary" onclick="Chat.open()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Live Chat
+              </button>
+              <button class="btn btn--secondary" onclick="Toast.show('WhatsApp: +254 700 123 456','info')">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.94 11.94 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.12.56 4.18 1.62 6L0 24l6.18-1.62A12 12 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.25-6.19-3.48-8.52z"/></svg>
+                WhatsApp
+              </button>
+            </div>
+            <div class="assist-chat__feats">
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Quick response</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Expert support</span>
+              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 5 6 1-4.5 4 1 6L12 15l-5.5 3 1-6L3 8l6-1z"/></svg> Bulk pricing</span>
+            </div>
+          </div>
+
+          <div class="mini-trust">
+            <div class="mini-trust__item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M13 9h.01M9 13h.01M13 13h.01M9 17h.01M13 17h.01"/></svg>
+              <div><b>Factory Direct Supply</b>Better quality. Better price.</div>
+            </div>
+            <div class="mini-trust__item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div><b>Secure Payments</b>Safe and encrypted transactions.</div>
+            </div>
+            <div class="mini-trust__item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="15" height="10"/><path d="M16 10h4l3 3v4h-7"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg>
+              <div><b>Nationwide Delivery</b>Delivering to all counties.</div>
+            </div>
+            <div class="mini-trust__item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 17l5-5-5-5"/><path d="M22 17l-5-5 5-5"/><path d="M7 22l5-5 5 5"/><path d="M7 2l5 5 5-5"/></svg>
+              <div><b>Project Support</b>Technical support for projects of any size.</div>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      /* ---------- Cart table ---------- */
+      function renderCartCard() {
+        const t = totals();
+        if (!t.items.length) {
+          return `
+          <div class="card-panel empty-cart">
+            <div class="empty-cart__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>
+              </svg>
+            </div>
+            <h3>Your cart is empty</h3>
+            <p>Add some products to get started.</p>
+            <a class="btn btn--primary" href="category.html">Browse Products</a>
+          </div>`;
+        }
+
+        return `
+        <div class="card-panel">
+          <div class="cart-panel-head">
+            <h2>Your Cart <span class="muted">(${t.count} ${t.count === 1 ? "item" : "items"})</span></h2>
+          </div>
+          <table class="cart-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Specification</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th class="text-right">Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${t.items
+                .map((row, i) => {
+                  const specLines = row.variant
+                    ? Object.entries(row.variant)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join("<br>")
+                    : row.product.shortDesc || "—";
+                  return `
+                  <tr>
+                    <td>
+                      <div class="cart-prod">
+                        <a class="cart-prod__img" href="product.html?id=${row.product.id}">
+                          <img src="${row.product.image}" alt="" onerror="this.src='${FALLBACK_IMG}'">
+                        </a>
+                        <div class="cart-prod__info">
+                          <a class="cart-prod__name" href="product.html?id=${row.product.id}">${row.product.name}</a>
+                          <div class="cart-prod__sub">${row.product.shortDesc || ""}</div>
+                          <div class="cart-prod__price-m">${fmtKSh(row.product.price)}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="cart-spec">${specLines}</td>
+                    <td>${fmtKSh(row.product.price)}</td>
+                    <td>
+                      <div class="qty">
+                        <button onclick="updateQty(${i}, ${row.qty - 1})" aria-label="Decrease">−</button>
+                        <input type="number" min="1" value="${row.qty}"
+                               onchange="updateQty(${i}, parseInt(this.value)||1)">
+                        <button onclick="updateQty(${i}, ${row.qty + 1})" aria-label="Increase">+</button>
+                      </div>
+                    </td>
+                    <td class="text-right"><b>${fmtKSh(row.subtotal)}</b></td>
+                    <td class="text-right">
+                      <button class="icon-btn" onclick="removeItem(${i})" aria-label="Remove">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    </td>
+                  </tr>`;
+                })
+                .join("")}
+            </tbody>
+          </table>
+          <div class="cart-panel-foot">
+            <a class="btn btn--secondary" href="category.html">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Continue Shopping
+            </a>
+            <button class="btn btn--secondary" onclick="renderBody()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15A9 9 0 1 1 18 5.3"/></svg>
+              Update Cart
+            </button>
+          </div>
+        </div>`;
+      }
+
+      /* ---------- Delivery form ---------- */
+      function renderDeliveryCard() {
+        const disabled = state.step < 2 ? "inert" : "";
+        const countyOpts = KENYA_COUNTIES.map(
+          (c) =>
+            `<option value="${c}" ${state.form.county === c ? "selected" : ""}>${c}</option>`,
+        ).join("");
+        const cities = CITIES_BY_COUNTY[state.form.county] || [];
+        const cityOpts = cities
+          .map(
+            (c) =>
+              `<option value="${c}" ${state.form.city === c ? "selected" : ""}>${c}</option>`,
+          )
+          .join("");
+
+        return `
+        <div class="card-panel ${disabled}" style="${state.step < 2 ? "opacity:.55;pointer-events:none" : ""}">
+          <h2 class="panel-head"><span class="panel-num">1.</span> Delivery Details</h2>
+          <div class="form-grid">
+            <div class="field">
+              <label>Full Name / Company *</label>
+              <input type="text" placeholder="Enter company or full name" value="${escapeHtml(state.form.name)}"
+                     onchange="state.form.name=this.value">
+            </div>
+            <div class="field">
+              <label>Phone Number *</label>
+              <input type="tel" placeholder="07XX XXX XXX" value="${escapeHtml(state.form.phone)}"
+                     onchange="state.form.phone=this.value">
+            </div>
+            <div class="field">
+              <label>Email Address *</label>
+              <input type="email" placeholder="you@example.co.ke" value="${escapeHtml(state.form.email)}"
+                     onchange="state.form.email=this.value">
+            </div>
+            <div class="field field--full">
+              <label>Delivery Address *</label>
+              <input type="text" placeholder="Building, Street, Area" value="${escapeHtml(state.form.address)}"
+                     onchange="state.form.address=this.value">
+            </div>
+            <div class="field">
+              <label>County *</label>
+              <select onchange="state.form.county=this.value; state.form.city=''; renderBody()">
+                <option value="">Select County</option>
+                ${countyOpts}
+              </select>
+            </div>
+            <div class="field">
+              <label>City / Town *</label>
+              <select onchange="state.form.city=this.value" ${cities.length ? "" : "disabled"}>
+                <option value="">${cities.length ? "Select City / Town" : "Select county first"}</option>
+                ${cityOpts}
+              </select>
+            </div>
+            <div class="field field--full">
+              <label>Delivery Notes (Optional)</label>
+              <input type="text" placeholder="Special instructions, site access, delivery time preferences, etc."
+                     value="${escapeHtml(state.form.notes)}" onchange="state.form.notes=this.value">
+            </div>
+            <div class="field field--full">
+              <label class="checkbox">
+                <input type="checkbox" ${state.form.saveInfo ? "checked" : ""}
+                       onchange="state.form.saveInfo=this.checked">
+                <span>Save this information for next time</span>
+              </label>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      /* ---------- Payment ---------- */
+      function renderPaymentCard() {
+        const disabled = state.step < 3;
+        const opts = [
+          {
+            id: "mpesa",
+            name: "M-PESA",
+            desc: "Pay securely via M-PESA STK Push.",
+            icon: "mpesa",
+          },
+          {
+            id: "bank",
+            name: "Bank Transfer",
+            desc: "Direct deposit to our company bank account.",
+            icon: "bank",
+          },
+          {
+            id: "card",
+            name: "Card Payment",
+            desc: "Pay securely with Visa or Mastercard.",
+            icon: "card",
+          },
+          {
+            id: "quote",
+            name: "Pay After Quotation",
+            desc: "Submit request and pay after quotation approval.",
+            icon: "quote",
+          },
+        ];
+        return `
+        <div class="card-panel ${disabled ? "is-disabled" : ""}" style="${disabled ? "opacity:.55;pointer-events:none" : ""}">
+          <h2 class="panel-head"><span class="panel-num">2.</span> Payment Method</h2>
+          <div class="pay-grid">
+            ${opts
+              .map(
+                (o) => `
+              <label class="pay-opt ${state.payment === o.id ? "is-active" : ""}">
+                <input type="radio" name="pay" value="${o.id}" ${state.payment === o.id ? "checked" : ""}
+                       onchange="state.payment='${o.id}'; renderBody()">
+                <div class="pay-opt__icon pay-opt__icon--${o.icon}">${payIcon(o.icon)}</div>
+                <div class="pay-opt__text">
+                  <b>${o.name}</b>
+                  <span>${o.desc}</span>
+                </div>
+                <div class="pay-opt__check">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+              </label>`,
+              )
+              .join("")}
+          </div>
+          <p class="pay-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <b>All payments are secure and encrypted.</b>
+            <span>Your payment information is safe with us.</span>
+          </p>
+        </div>`;
+      }
+      function payIcon(k) {
+        if (k === "mpesa")
+          return '<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="6" fill="#00A651"/><text x="50%" y="58%" text-anchor="middle" font-family="Manrope,sans-serif" font-size="11" font-weight="800" fill="white">M‑PESA</text></svg>';
+        if (k === "bank")
+          return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V10"/><path d="M19 21V10"/><path d="M9 21v-8"/><path d="M15 21v-8"/><path d="M2 10h20L12 3z"/></svg>';
+        if (k === "card")
+          return '<svg viewBox="0 0 40 24" fill="none"><rect width="40" height="24" rx="3" fill="#1a1f71"/><circle cx="16" cy="12" r="6" fill="#eb001b" opacity=".9"/><circle cx="24" cy="12" r="6" fill="#f79e1b" opacity=".9"/></svg>';
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
+      }
+
+      /* ---------- Confirmation ---------- */
+      function renderConfirmation(order) {
+        return `
+        <div class="cart-layout" style="grid-template-columns:1fr">
+          <div class="card-panel" style="text-align:center;padding:60px 24px">
+            <div class="confirm-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h2 style="font-family:var(--font-display);font-size:30px;font-weight:800;margin-bottom:8px">Order Placed Successfully!</h2>
+            <p style="color:var(--ink-500);margin-bottom:6px">Thank you for your order. We'll contact you shortly.</p>
+            <p style="color:var(--ink-700);margin-bottom:28px"><b>Order ID:</b> ${order.id}</p>
+
+            <div style="display:inline-block;background:var(--green-50);border:1px solid var(--green-100);border-radius:var(--r-lg);padding:20px 28px;margin-bottom:28px;text-align:left;min-width:280px">
+              <div style="font-size:13px;color:var(--ink-500);margin-bottom:4px">Order Total</div>
+              <div style="font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--green-700)">${fmtKSh(order.total)}</div>
+              <div style="font-size:13px;color:var(--ink-600);margin-top:8px">Payment: ${paymentLabel(order.payment)}</div>
+            </div>
+
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+              <a class="btn btn--primary" href="index.html">Back to Home</a>
+              <button class="btn btn--secondary" onclick="Chat.open()">Chat with us</button>
+            </div>
+          </div>
+        </div>`;
+      }
+      function paymentLabel(p) {
+        return (
+          {
+            mpesa: "M-PESA",
+            bank: "Bank Transfer",
+            card: "Card Payment",
+            quote: "Pay After Quotation",
+          }[p] || p
+        );
+      }
+
+      /* ---------- Main render ---------- */
+      function renderBody() {
+        renderSteps();
+        const body = document.getElementById("checkout-body");
+        const t = totals();
+
+        // Empty cart on step 1 with no items
+        if (state.step === 1 && !t.items.length) {
+          body.innerHTML = `
+          <div class="cart-layout" style="grid-template-columns:1fr">
+            ${renderCartCard()}
+          </div>`;
+          return;
+        }
+
+        body.innerHTML = `
+        <div class="cart-layout">
+          <div class="cart-col-main">
+            ${state.step >= 1 ? renderCartCard() : ""}
+            ${state.step >= 2 ? renderDeliveryCard() : ""}
+            ${state.step >= 3 ? renderPaymentCard() : ""}
+          </div>
+          ${renderSummaryPanel()}
+        </div>`;
+      }
+
+      /* ---------- Actions ---------- */
+      function updateQty(i, qty) {
+        Cart.update(i, qty);
+        renderBody();
+      }
+      function removeItem(i) {
+        Cart.remove(i);
+        renderBody();
+      }
+      function gotoStep(n) {
+        if (n === 3) {
+          // Validate delivery form
+          const f = state.form;
+          if (
+            !f.name ||
+            !f.phone ||
+            !f.email ||
+            !f.address ||
+            !f.county ||
+            !f.city
+          ) {
+            Toast.show("Please fill in all required delivery fields", "error");
+            return;
+          }
+          if (!/^[\d\s+\-()]{7,}$/.test(f.phone)) {
+            Toast.show("Please enter a valid phone number", "error");
+            return;
+          }
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) {
+            Toast.show("Please enter a valid email address", "error");
+            return;
+          }
+        }
+        state.step = n;
+        renderBody();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      function placeOrder() {
+        const t = totals();
+        if (!t.items.length) {
+          Toast.show("Your cart is empty", "error");
+          return;
+        }
+        if (state.form.saveInfo) {
+          try {
+            localStorage.setItem(
+              "HOMART.checkoutInfo",
+              JSON.stringify(state.form),
+            );
+          } catch (e) {}
+        }
+        const order = DataStore.createOrder({
+          items: t.items.map((r) => ({
+            productId: r.product.id,
+            name: r.product.name,
+            sku: r.product.sku,
+            price: r.product.price,
+            qty: r.qty,
+            variant: r.variant,
+            subtotal: r.subtotal,
+          })),
+          subtotal: t.subtotal,
+          delivery: t.delivery,
+          tax: t.tax,
+          total: t.total,
+          payment: state.payment,
+          customer: { ...state.form },
+        });
+        Cart.clear();
+        state.step = 4;
+        renderSteps();
+        document.getElementById("checkout-body").innerHTML =
+          renderConfirmation(order);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      function escapeHtml(s) {
+        return String(s || "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[m],
+        );
+      }
+
+      // React to external cart changes (e.g., from the header cart actions)
+      window.addEventListener("cart:update", () => {
+        if (state.step < 4) renderBody();
+      });
+
+      /* ---------- Init ---------- */
+      renderBody();
+    </script>
+
+    <style>
+      /* Steps indicator */
+      .step {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .step__num {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--ink-100);
+        color: var(--ink-500);
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .step__label {
+        font-size: 13px;
+        color: var(--ink-500);
+        font-weight: 500;
+      }
+      .step.is-active .step__num {
+        background: var(--green-700);
+        color: white;
+      }
+      .step.is-active .step__label {
+        color: var(--ink-900);
+        font-weight: 600;
+      }
+      .step.is-done .step__num {
+        background: var(--green-100);
+        color: var(--green-700);
+      }
+      .step.is-done .step__label {
+        color: var(--ink-700);
+      }
+      .step__line {
+        width: 42px;
+        height: 2px;
+        background: var(--ink-100);
+        display: inline-block;
+        margin: 0 4px;
+      }
+
+      /* Card panels */
+      .card-panel {
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 24px;
+        margin-bottom: 20px;
+      }
+      .cart-panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .cart-panel-head h2 {
+        font-family: var(--font-display);
+        font-size: 22px;
+        font-weight: 700;
+      }
+      .cart-panel-head .muted {
+        color: var(--ink-500);
+        font-weight: 500;
+        font-size: 14px;
+        margin-left: 6px;
+      }
+      .cart-panel-foot {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--ink-100);
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .panel-head {
+        font-family: var(--font-display);
+        font-size: 17px;
+        font-weight: 700;
+        margin-bottom: 18px;
+        color: var(--ink-900);
+      }
+      .panel-num {
+        color: var(--green-700);
+        margin-right: 6px;
+      }
+
+      /* Cart table product cell */
+      .cart-prod {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .cart-prod__img {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--ink-50);
+        flex-shrink: 0;
+      }
+      .cart-prod__img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .cart-prod__name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink-900);
+        display: block;
+        margin-bottom: 2px;
+      }
+      .cart-prod__name:hover {
+        color: var(--green-700);
+      }
+      .cart-prod__sub {
+        font-size: 12.5px;
+        color: var(--ink-500);
+      }
+      .cart-prod__price-m {
+        display: none;
+        font-weight: 600;
+        color: var(--ink-900);
+        margin-top: 4px;
+      }
+      .cart-spec {
+        color: var(--ink-500);
+        font-size: 12.5px;
+        line-height: 1.6;
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--ink-500);
+        cursor: pointer;
+      }
+      .icon-btn:hover {
+        background: var(--ink-50);
+        color: var(--ink-900);
+      }
+      .icon-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .text-right {
+        text-align: right;
+      }
+
+      /* Form */
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field--full {
+        grid-column: 1 / -1;
+      }
+      .field label {
+        font-size: 12.5px;
+        color: var(--ink-700);
+        font-weight: 500;
+      }
+      .field input,
+      .field select {
+        height: 42px;
+        padding: 0 12px;
+        font-size: 14px;
+        font-family: inherit;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-md);
+        background: white;
+        color: var(--ink-900);
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .field input:focus,
+      .field select:focus {
+        border-color: var(--green-700);
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(30, 74, 52, 0.12);
+      }
+      .field select {
+        cursor: pointer;
+      }
+      .checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13.5px;
+        color: var(--ink-700);
+        cursor: pointer;
+      }
+      .checkbox input {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--green-700);
+      }
+
+      /* Payment options */
+      .pay-opt {
+        position: relative;
+        cursor: pointer;
+        border: 1.5px solid var(--ink-200);
+        border-radius: var(--r-md);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition: all 0.15s;
+        background: white;
+      }
+      .pay-opt input {
+        position: absolute;
+        opacity: 0;
+      }
+      .pay-opt__icon {
+        width: 40px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ink-700);
+      }
+      .pay-opt__icon svg {
+        max-width: 100%;
+        max-height: 100%;
+      }
+      .pay-opt__icon--card svg,
+      .pay-opt__icon--mpesa svg {
+        width: 40px;
+        height: 26px;
+      }
+      .pay-opt__text b {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--ink-900);
+        margin-bottom: 4px;
+      }
+      .pay-opt__text span {
+        font-size: 12px;
+        color: var(--ink-500);
+        line-height: 1.4;
+      }
+      .pay-opt__check {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--green-700);
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      .pay-opt__check svg {
+        width: 13px;
+        height: 13px;
+      }
+      .pay-opt:hover {
+        border-color: var(--ink-400, var(--ink-500));
+      }
+      .pay-opt.is-active {
+        border-color: var(--green-700);
+        background: var(--green-50);
+      }
+      .pay-opt.is-active .pay-opt__check {
+        display: inline-flex;
+      }
+
+      .pay-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--ink-600, var(--ink-700));
+        margin-top: 14px;
+        padding: 10px 12px;
+        background: var(--ink-50);
+        border-radius: var(--r-md);
+      }
+      .pay-note svg {
+        color: var(--green-700);
+        flex-shrink: 0;
+      }
+      .pay-note b {
+        margin-right: 4px;
+        color: var(--ink-900);
+        font-weight: 600;
+      }
+
+      /* Assist chat panel extras */
+      .assist-chat__feats {
+        display: flex;
+        gap: 14px;
+        padding-top: 10px;
+        border-top: 1px solid var(--ink-100);
+      }
+      .assist-chat__feats span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        color: var(--ink-600, var(--ink-700));
+      }
+      .assist-chat__feats svg {
+        width: 14px;
+        height: 14px;
+        color: var(--green-700);
+      }
+
+      /* Empty cart */
+      .empty-cart {
+        text-align: center;
+        padding: 60px 24px;
+      }
+      .empty-cart__icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: var(--ink-50);
+        color: var(--ink-400, var(--ink-500));
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+      .empty-cart__icon svg {
+        width: 32px;
+        height: 32px;
+      }
+      .empty-cart h3 {
+        font-family: var(--font-display);
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .empty-cart p {
+        color: var(--ink-500);
+        margin-bottom: 20px;
+      }
+
+      /* Confirmation icon */
+      .confirm-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: var(--green-100);
+        color: var(--green-700);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      .confirm-icon svg {
+        width: 36px;
+        height: 36px;
+      }
+
+      /* Mobile: collapse cart table to cards */
+      @media (max-width: 768px) {
+        .cart-table thead {
+          display: none;
+        }
+        .cart-table,
+        .cart-table tbody,
+        .cart-table tr {
+          display: block;
+          width: 100%;
+        }
+        .cart-table td {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 0;
+          border: 0;
+        }
+        .cart-table tr {
+          padding: 14px;
+          margin-bottom: 10px;
+          border: 1px solid var(--ink-100);
+          border-radius: var(--r-md);
+        }
+        .cart-table td:first-child {
+          padding-bottom: 10px;
+          border-bottom: 1px solid var(--ink-100);
+        }
+        .cart-prod__price-m {
+          display: block;
+        }
+        .cart-table td:nth-child(3) {
+          display: none;
+        } /* hide price column on mobile */
+      }
+    </style>
+  </body>
+</html>

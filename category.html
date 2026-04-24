@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shop Products · HOMART Hardware</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="header-slot"></div>
+
+    <main>
+      <div class="container">
+        <nav class="crumb" id="crumb"></nav>
+
+        <section class="cat-hero">
+          <div class="cat-hero__text">
+            <h1 id="cat-title">All Products</h1>
+            <p id="cat-desc">
+              High-quality pipes, fittings, fixtures and hardware for every
+              project. Durable, reliable and built to last for homes, businesses
+              and industries.
+            </p>
+          </div>
+          <div
+            class="cat-hero__img"
+            id="cat-img"
+            style="
+              background-image: url(&quot;https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&auto=format&fit=crop&quot;);
+            "
+          ></div>
+        </section>
+
+        <div class="cat-layout">
+          <!-- Filters -->
+          <aside class="filters">
+            <button class="reset-filters" onclick="ProductPage.resetFilters()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                width="14"
+                height="14"
+              >
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+              Reset Filters
+            </button>
+
+            <details class="filter-group" open>
+              <summary>Category</summary>
+              <div class="filter-group__body" id="filter-category"></div>
+            </details>
+
+            <details class="filter-group" open>
+              <summary>Subcategory</summary>
+              <div class="filter-group__body" id="filter-subcategory"></div>
+            </details>
+
+            <details class="filter-group" open>
+              <summary>Price Range (KES)</summary>
+              <div class="filter-group__body">
+                <div class="price-inputs">
+                  <input type="number" id="f-min-price" placeholder="500" />
+                  <span>–</span>
+                  <input type="number" id="f-max-price" placeholder="50,000" />
+                </div>
+              </div>
+            </details>
+
+            <details class="filter-group" open>
+              <summary>Material</summary>
+              <div class="filter-group__body" id="filter-material"></div>
+            </details>
+
+            <details class="filter-group">
+              <summary>Size (Diameter)</summary>
+              <div class="filter-group__body">
+                <div class="filter-row">
+                  <label><input type="checkbox" disabled /> 15mm (½")</label>
+                </div>
+                <div class="filter-row">
+                  <label><input type="checkbox" disabled /> 20mm (¾")</label>
+                </div>
+                <div class="filter-row">
+                  <label><input type="checkbox" disabled /> 25mm (1")</label>
+                </div>
+                <div class="filter-row">
+                  <label><input type="checkbox" disabled /> 32mm (1¼")</label>
+                </div>
+              </div>
+            </details>
+
+            <details class="filter-group">
+              <summary>Availability</summary>
+              <div class="filter-group__body">
+                <div class="filter-row">
+                  <label
+                    ><input type="checkbox" id="f-instock" /> In Stock</label
+                  >
+                </div>
+              </div>
+            </details>
+
+            <details class="filter-group">
+              <summary>Brand</summary>
+              <div class="filter-group__body">
+                <div class="filter-row">
+                  <label><input type="checkbox" disabled /> HOMART</label
+                  ><span class="count">All</span>
+                </div>
+              </div>
+            </details>
+
+            <div class="apply-filters">
+              <button
+                class="btn btn--primary btn--block"
+                onclick="ProductPage.applyFilters()"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </aside>
+
+          <!-- Results -->
+          <section>
+            <div class="results-head">
+              <div class="results-count" id="results-count">
+                Showing 0 products
+              </div>
+              <div class="results-tools">
+                <div class="sub-search">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="search"
+                    id="sub-search-input"
+                    placeholder="Search within results…"
+                  />
+                </div>
+                <select class="sort-select" id="sort-select">
+                  <option value="">Best Match</option>
+                  <option value="price-asc">Price: Low → High</option>
+                  <option value="price-desc">Price: High → Low</option>
+                  <option value="name-asc">Name: A → Z</option>
+                </select>
+                <div class="view-toggle">
+                  <button
+                    id="view-grid"
+                    class="is-active"
+                    onclick="ProductPage.setView('grid')"
+                    aria-label="Grid"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <rect x="3" y="3" width="7" height="7" />
+                      <rect x="14" y="3" width="7" height="7" />
+                      <rect x="3" y="14" width="7" height="7" />
+                      <rect x="14" y="14" width="7" height="7" />
+                    </svg>
+                  </button>
+                  <button
+                    id="view-list"
+                    onclick="ProductPage.setView('list')"
+                    aria-label="List"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="8" y1="6" x2="21" y2="6" />
+                      <line x1="8" y1="12" x2="21" y2="12" />
+                      <line x1="8" y1="18" x2="21" y2="18" />
+                      <line x1="3" y1="6" x2="3.01" y2="6" />
+                      <line x1="3" y1="12" x2="3.01" y2="12" />
+                      <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="results-grid" id="results-grid"></div>
+
+            <!-- Bulk banner -->
+            <div class="bulk-banner">
+              <div class="bulk-banner__left">
+                <div class="bulk-banner__icon">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="7" width="7" height="7" />
+                    <rect x="14" y="7" width="7" height="7" />
+                    <rect x="9" y="14" width="7" height="7" />
+                  </svg>
+                </div>
+                <div>
+                  <b>Buying in bulk?</b>
+                  <span
+                    >Get better prices on larger quantities. Talk to our team
+                    for a custom quote.</span
+                  >
+                </div>
+              </div>
+              <div class="bulk-banner__actions">
+                <button class="btn btn--secondary" onclick="Chat.toggle()">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
+                    />
+                  </svg>
+                  Chat on WhatsApp
+                </button>
+                <button class="btn btn--primary" onclick="Chat.toggle()">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M12 2l3 5 6 1-4.5 4 1 6L12 15l-5.5 3 1-6L3 8l6-1z"
+                    />
+                  </svg>
+                  Request Bulk Quote
+                </button>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination"></div>
+          </section>
+        </div>
+      </div>
+
+      <div id="trustbar-slot"></div>
+    </main>
+
+    <div id="footer-slot"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/layout.js"></script>
+    <script>
+      /* ========= Category Page ========= */
+      const ProductPage = {
+        state: {
+          cat: URLParams.get("cat") || "",
+          subcat: URLParams.get("sub") || "",
+          q: URLParams.get("q") || "",
+          material: "",
+          minPrice: null,
+          maxPrice: null,
+          inStock: false,
+          sort: "",
+          view: "grid",
+          page: 1,
+          perPage: 10,
+        },
+
+        init() {
+          // Header active state
+          const cat = this.state.cat;
+          Layout.render(cat || "all");
+
+          // Prefill search input if q present
+          if (this.state.q) {
+            document.getElementById("sub-search-input").value = this.state.q;
+          }
+
+          this.renderBreadcrumb();
+          this.renderCategoryHero();
+          this.renderFilters();
+          this.render();
+
+          // Listeners
+          document
+            .getElementById("sub-search-input")
+            .addEventListener("input", (e) => {
+              this.state.q = e.target.value;
+              this.state.page = 1;
+              this.render();
+            });
+          document
+            .getElementById("sort-select")
+            .addEventListener("change", (e) => {
+              this.state.sort = e.target.value;
+              this.render();
+            });
+          document
+            .getElementById("f-instock")
+            .addEventListener("change", (e) => {
+              this.state.inStock = e.target.checked;
+            });
+        },
+
+        renderBreadcrumb() {
+          const crumb = document.getElementById("crumb");
+          const parts = [`<a href="index.html">Home</a>`];
+          if (this.state.cat) {
+            const c = DataStore.getCategory(this.state.cat);
+            if (c) {
+              parts.push(
+                `<span class="crumb__sep">/</span><a href="category.html?cat=${c.id}">${c.name}</a>`,
+              );
+              if (this.state.subcat) {
+                const sub = c.subcategories.find(
+                  (s) => s.id === this.state.subcat,
+                );
+                if (sub)
+                  parts.push(
+                    `<span class="crumb__sep">/</span><span class="is-current">${sub.name}</span>`,
+                  );
+              }
+            }
+          } else {
+            parts.push(
+              `<span class="crumb__sep">/</span><span class="is-current">All Products</span>`,
+            );
+          }
+          crumb.innerHTML = parts.join("");
+        },
+
+        renderCategoryHero() {
+          if (!this.state.cat) {
+            document.getElementById("cat-title").textContent = "All Products";
+            document.getElementById("cat-desc").textContent =
+              "High-quality pipes, fittings, fixtures and hardware for every project. Durable, reliable and built to last for homes, businesses and industries.";
+            return;
+          }
+          const c = DataStore.getCategory(this.state.cat);
+          if (!c) return;
+          if (
+            this.state.cat === "plumbing" ||
+            this.state.cat === "pipe-fittings"
+          ) {
+            document.getElementById("cat-title").textContent =
+              c.name === "Pipe Fittings" ? "Plumbing & Pipe Fittings" : c.name;
+          } else {
+            document.getElementById("cat-title").textContent = c.name;
+          }
+          document.getElementById("cat-desc").textContent =
+            `High-quality ${c.name.toLowerCase()} for every project. Durable, reliable and built to last for homes, businesses and industries.`;
+        },
+
+        renderFilters() {
+          // Categories
+          const cats = DataStore.getCategories();
+          document.getElementById("filter-category").innerHTML = cats
+            .map((c) => {
+              const count = DataStore.getProducts({ category: c.id }).length;
+              const checked = this.state.cat === c.id ? "checked" : "";
+              return `<div class="filter-row">
+            <label><input type="checkbox" ${checked} onclick="ProductPage.toggleCategory('${c.id}')"> ${c.name}</label>
+            <span class="count">${count}</span>
+          </div>`;
+            })
+            .join("");
+
+          // Subcategories (of current cat, else show all pipe-fittings subcats as in design)
+          const currentCat =
+            DataStore.getCategory(this.state.cat) ||
+            DataStore.getCategory("pipe-fittings");
+          const subs = currentCat ? currentCat.subcategories : [];
+          document.getElementById("filter-subcategory").innerHTML =
+            subs
+              .map((s) => {
+                const count = DataStore.getProducts({
+                  subcategory: s.id,
+                }).length;
+                const checked = this.state.subcat === s.id ? "checked" : "";
+                return `<div class="filter-row">
+            <label><input type="checkbox" ${checked} onclick="ProductPage.toggleSub('${s.id}')"> ${s.name}</label>
+            <span class="count">${count}</span>
+          </div>`;
+              })
+              .join("") +
+            `<a href="#" onclick="event.preventDefault();Toast.show('All subcategories shown');" style="color:var(--green-700);font-size:12.5px;margin-top:8px;display:inline-block;font-weight:600;">+ Show more</a>`;
+
+          // Materials
+          const allProducts = DataStore.getProducts();
+          const materialMap = {};
+          allProducts.forEach((p) => {
+            if (p.material)
+              materialMap[p.material] = (materialMap[p.material] || 0) + 1;
+          });
+          const materials = Object.entries(materialMap);
+          document.getElementById("filter-material").innerHTML = materials
+            .slice(0, 6)
+            .map(
+              ([mat, count]) => `
+          <div class="filter-row">
+            <label><input type="checkbox" onclick="ProductPage.setMaterial('${mat}', this.checked)"> ${mat}</label>
+            <span class="count">${count}</span>
+          </div>`,
+            )
+            .join("");
+        },
+
+        toggleCategory(id) {
+          this.state.cat = this.state.cat === id ? "" : id;
+          this.state.subcat = "";
+          this.state.page = 1;
+          this.renderBreadcrumb();
+          this.renderCategoryHero();
+          this.renderFilters();
+          this.render();
+          Layout.render(this.state.cat || "all"); // update active nav link
+        },
+        toggleSub(id) {
+          this.state.subcat = this.state.subcat === id ? "" : id;
+          this.state.page = 1;
+          this.renderBreadcrumb();
+          this.renderFilters();
+          this.render();
+        },
+        setMaterial(mat, on) {
+          this.state.material = on ? mat : "";
+          this.state.page = 1;
+          this.render();
+        },
+
+        applyFilters() {
+          const min = parseFloat(document.getElementById("f-min-price").value);
+          const max = parseFloat(document.getElementById("f-max-price").value);
+          this.state.minPrice = isNaN(min) ? null : min;
+          this.state.maxPrice = isNaN(max) ? null : max;
+          this.state.page = 1;
+          this.render();
+        },
+
+        resetFilters() {
+          this.state = {
+            ...this.state,
+            cat: "",
+            subcat: "",
+            q: "",
+            material: "",
+            minPrice: null,
+            maxPrice: null,
+            inStock: false,
+            sort: "",
+            page: 1,
+          };
+          document.getElementById("sub-search-input").value = "";
+          document.getElementById("sort-select").value = "";
+          document.getElementById("f-min-price").value = "";
+          document.getElementById("f-max-price").value = "";
+          document.getElementById("f-instock").checked = false;
+          this.renderBreadcrumb();
+          this.renderCategoryHero();
+          this.renderFilters();
+          this.render();
+          Layout.render("all");
+        },
+
+        setView(v) {
+          this.state.view = v;
+          document
+            .getElementById("view-grid")
+            .classList.toggle("is-active", v === "grid");
+          document
+            .getElementById("view-list")
+            .classList.toggle("is-active", v === "list");
+          this.render();
+        },
+
+        renderCard(p) {
+          const priceHtml = p.requestPrice
+            ? `<div class="card__price card__price--request">Request Price</div>`
+            : `<div class="card__price">${fmtKSh(p.price)}</div>`;
+          return `
+        <article class="card">
+          <a class="card__media" href="product.html?id=${p.id}">
+            ${safeImg(p.image)}
+            <span class="stock-badge ${p.inStock ? "" : "stock-badge--out"}">${p.inStock ? "In Stock" : "Out"}</span>
+          </a>
+          <div class="card__body">
+            <a class="card__name" href="product.html?id=${p.id}">${p.name}</a>
+            <div class="card__desc">${p.shortDesc || ""}</div>
+            ${priceHtml}
+          </div>
+          <div class="card__actions">
+            <button class="btn btn--primary" onclick="Cart.add('${p.id}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+              Add to Cart
+            </button>
+            <button class="btn btn--secondary" onclick="Chat.askAbout('${p.id}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Chat Now
+            </button>
+          </div>
+        </article>`;
+        },
+
+        render() {
+          const filter = {
+            category: this.state.cat || undefined,
+            subcategory: this.state.subcat || undefined,
+            search: this.state.q || undefined,
+            material: this.state.material || undefined,
+            minPrice: this.state.minPrice,
+            maxPrice: this.state.maxPrice,
+            inStock: this.state.inStock || undefined,
+            sort: this.state.sort,
+          };
+          const all = DataStore.getProducts(filter);
+          const total = all.length;
+          const start = (this.state.page - 1) * this.state.perPage;
+          const items = all.slice(start, start + this.state.perPage);
+
+          const grid = document.getElementById("results-grid");
+          grid.classList.toggle(
+            "results-grid--list",
+            this.state.view === "list",
+          );
+
+          if (items.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--ink-500);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56" style="margin:0 auto 16px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <h3 style="color:var(--ink-900);margin-bottom:6px;">No products found</h3>
+            <p>Try removing some filters or searching with different keywords.</p>
+            <button class="btn btn--primary" style="margin-top:16px;" onclick="ProductPage.resetFilters()">Clear all filters</button>
+          </div>`;
+          } else {
+            grid.innerHTML = items.map((p) => this.renderCard(p)).join("");
+          }
+
+          document.getElementById("results-count").textContent =
+            total === 0
+              ? "No products found"
+              : `Showing ${start + 1}–${Math.min(start + this.state.perPage, total)} of ${total} products`;
+
+          // Pagination
+          const pages = Math.ceil(total / this.state.perPage) || 1;
+          const pagEl = document.getElementById("pagination");
+          if (pages <= 1) {
+            pagEl.innerHTML = "";
+            return;
+          }
+          let html = "";
+          html += `<button onclick="ProductPage.goPage(${this.state.page - 1})" ${this.state.page === 1 ? "disabled" : ""}>‹</button>`;
+          const maxShow = 5;
+          let from = Math.max(1, this.state.page - 2),
+            to = Math.min(pages, from + maxShow - 1);
+          if (to - from < maxShow - 1) from = Math.max(1, to - maxShow + 1);
+          if (from > 1)
+            html += `<button onclick="ProductPage.goPage(1)">1</button>${from > 2 ? '<span style="padding:0 6px;color:#9ca3af">…</span>' : ""}`;
+          for (let i = from; i <= to; i++) {
+            html += `<button class="${this.state.page === i ? "is-active" : ""}" onclick="ProductPage.goPage(${i})">${i}</button>`;
+          }
+          if (to < pages)
+            html += `${to < pages - 1 ? '<span style="padding:0 6px;color:#9ca3af">…</span>' : ""}<button onclick="ProductPage.goPage(${pages})">${pages}</button>`;
+          html += `<button onclick="ProductPage.goPage(${this.state.page + 1})" ${this.state.page === pages ? "disabled" : ""}>›</button>`;
+          pagEl.innerHTML = html;
+        },
+
+        goPage(n) {
+          this.state.page = n;
+          this.render();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+      };
+
+      ProductPage.init();
+      window.ProductPage = ProductPage;
+    </script>
+  </body>
+</html>

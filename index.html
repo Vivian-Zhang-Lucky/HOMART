@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      HOMART Hardware · Factory Direct Hardware, Plumbing & Sanitary Ware in
+      Kenya
+    </title>
+    <meta
+      name="description"
+      content="Kenyan factory-direct supplier of quality hardware, plumbing and sanitary ware. Bulk orders welcome."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="header-slot"></div>
+
+    <main>
+      <div class="container">
+        <!-- HERO -->
+        <section class="hero">
+          <div class="hero__inner">
+            <div>
+              <h1 class="hero__title">
+                Your One‑Stop Supply for Hardware, Plumbing &amp; Sanitary Ware
+              </h1>
+              <p class="hero__lede">
+                Factory direct. Quality assured. Built for projects, homes and
+                businesses across Kenya.
+              </p>
+              <div class="hero__actions">
+                <a class="btn btn--primary btn--lg" href="category.html">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"
+                    />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                  Shop Products
+                </a>
+                <button
+                  class="btn btn--secondary btn--lg"
+                  onclick="Chat.toggle()"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                  </svg>
+                  Talk to Us
+                </button>
+              </div>
+              <div class="hero__trust">
+                <div class="hero__trust-item">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M12 2l3 5 6 1-4.5 4 1 6L12 15l-5.5 3 1-6L3 8l6-1z"
+                    />
+                  </svg>
+                  <div><b>Factory Direct</b><span>Better Price</span></div>
+                </div>
+                <div class="hero__trust-item">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="1" y="7" width="15" height="10" />
+                    <path d="M16 10h4l3 3v4h-7" />
+                    <circle cx="6" cy="19" r="2" />
+                    <circle cx="18" cy="19" r="2" />
+                  </svg>
+                  <div><b>Nationwide Delivery</b><span>All Counties</span></div>
+                </div>
+                <div class="hero__trust-item">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                  </svg>
+                  <div>
+                    <b>Expert Support</b><span>We're here to help</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="hero__image"
+              style="
+                background-image: url(&quot;https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=1200&auto=format&fit=crop&quot;);
+              "
+            ></div>
+          </div>
+        </section>
+
+        <!-- CATEGORY TILES -->
+        <div class="cat-tiles" id="cat-tiles"></div>
+
+        <!-- FEATURED PRODUCTS -->
+        <div class="section-head">
+          <h2>Featured Products</h2>
+          <a href="category.html">View all products →</a>
+        </div>
+        <div class="product-grid" id="featured-grid"></div>
+      </div>
+
+      <div id="trustbar-slot"></div>
+
+      <div class="container">
+        <!-- CTA band -->
+        <div class="cta-band">
+          <div class="cta-band__left">
+            <div class="cta-band__icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+            </div>
+            <div class="cta-band__text">
+              <b>Need a quote or have questions?</b>
+              <span
+                >Chat with our team to discuss prices, product details and bulk
+                orders.</span
+              >
+            </div>
+          </div>
+          <div class="cta-band__actions">
+            <button class="btn btn--on-dark" onclick="Chat.toggle()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
+                />
+              </svg>
+              Chat on WhatsApp
+            </button>
+            <button class="btn btn--on-white" onclick="Chat.toggle()">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+              </svg>
+              Start Live Chat
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer-slot"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/layout.js"></script>
+    <script>
+      Layout.render("home");
+
+      /* --------- Category tiles --------- */
+      const catIcons = {
+        hardware: [
+          "Hardware",
+          "🔨",
+          "https://images.unsplash.com/photo-1609205807107-454f1c7f5b6d?w=300&auto=format&fit=crop",
+        ],
+        plumbing: [
+          "Plumbing",
+          "🚰",
+          "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300&auto=format&fit=crop",
+        ],
+        "sanitary-ware": [
+          "Sanitary Ware",
+          "🚽",
+          "https://images.unsplash.com/photo-1564540583246-934409427776?w=300&auto=format&fit=crop",
+        ],
+        "bathroom-fixtures": [
+          "Bathroom Fixtures",
+          "🛁",
+          "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300&auto=format&fit=crop",
+        ],
+        tools: [
+          "Tools",
+          "🔧",
+          "https://images.unsplash.com/photo-1581147036324-c1c89c2c8b5c?w=300&auto=format&fit=crop",
+        ],
+        "pipe-fittings": [
+          "Pipe Fittings",
+          "🔩",
+          "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&auto=format&fit=crop",
+        ],
+        fasteners: [
+          "Fasteners",
+          "🔩",
+          "https://images.unsplash.com/photo-1609205807107-454f1c7f5b6d?w=300&auto=format&fit=crop",
+        ],
+        valves: [
+          "Valves",
+          "⚙️",
+          "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&auto=format&fit=crop",
+        ],
+      };
+      const tilesEl = document.getElementById("cat-tiles");
+      tilesEl.innerHTML = DataStore.getCategories()
+        .map(
+          (c) => `
+      <a class="cat-tile" href="category.html?cat=${c.id}">
+        <div class="cat-tile__icon">
+          <img src="${catIcons[c.id]?.[2] || ""}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.outerHTML='${c.icon}'">
+        </div>
+        <div class="cat-tile__name">${c.name}</div>
+        <div class="cat-tile__link">View all</div>
+      </a>`,
+        )
+        .join("");
+
+      /* --------- Featured products --------- */
+      function renderCard(p) {
+        const priceHtml = p.requestPrice
+          ? `<div class="card__price card__price--request">Request Price</div>`
+          : `<div class="card__price">${fmtKSh(p.price)}</div>`;
+        return `
+      <article class="card">
+        <a class="card__media" href="product.html?id=${p.id}">
+          ${safeImg(p.image)}
+          <span class="stock-badge ${p.inStock ? "" : "stock-badge--out"}">${p.inStock ? "In Stock" : "Out"}</span>
+        </a>
+        <div class="card__body">
+          <a class="card__name" href="product.html?id=${p.id}">${p.name}</a>
+          <div class="card__desc">${p.shortDesc || ""}</div>
+          ${priceHtml}
+        </div>
+        <div class="card__actions">
+          <button class="btn btn--primary" onclick="Cart.add('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+            Add to Cart
+          </button>
+          <button class="btn btn--secondary" onclick="Chat.askAbout('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Chat Now
+          </button>
+        </div>
+      </article>`;
+      }
+      document.getElementById("featured-grid").innerHTML =
+        DataStore.getProducts({ featured: true }).map(renderCard).join("");
+    </script>
+  </body>
+</html>
