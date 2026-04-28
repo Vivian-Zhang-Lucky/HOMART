@@ -24,18 +24,25 @@
       .m-order-stat {
         background: white;
         border: 1px solid var(--ink-200);
+        border-left: 4px solid var(--ink-200);
         border-radius: var(--r-lg);
         padding: 16px 18px;
         cursor: pointer;
-        transition: border-color 0.15s;
+        transition: box-shadow 0.15s, border-color 0.15s;
       }
-      .m-order-stat:hover {
-        border-color: var(--green-700);
-      }
-      .m-order-stat.is-active {
-        border-color: var(--green-700);
-        background: var(--green-50);
-      }
+      .m-order-stat:hover { box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+      .m-order-stat.is-active { box-shadow: 0 2px 12px rgba(0,0,0,.1); }
+
+      .m-order-stat--all   { border-left-color: #6b7280; }
+      .m-order-stat--all.is-active   { background: #f9fafb; border-left-color: #374151; }
+      .m-order-stat--pending { border-left-color: #f59e0b; }
+      .m-order-stat--pending.is-active { background: #fffbeb; border-left-color: #d97706; }
+      .m-order-stat--processing { border-left-color: #3b82f6; }
+      .m-order-stat--processing.is-active { background: #eff6ff; border-left-color: #2563eb; }
+      .m-order-stat--shipped { border-left-color: #8b5cf6; }
+      .m-order-stat--shipped.is-active { background: #f5f3ff; border-left-color: #7c3aed; }
+      .m-order-stat--delivered { border-left-color: #22c55e; }
+      .m-order-stat--delivered.is-active { background: #f0fdf4; border-left-color: #16a34a; }
       .m-order-stat__label {
         font-size: 12.5px;
         color: var(--ink-500);
@@ -426,18 +433,18 @@
             <!-- Stats -->
             <div class="m-order-statbar">
               ${[
-                ["all", "Total Orders", counts.all, fmtKSh(revenue) + " revenue"],
-                ["pending", "Pending", counts.pending, "Awaiting confirmation"],
-                ["processing", "Processing", counts.processing, "In preparation"],
-                ["shipped", "Shipped", counts.shipped, "On the way"],
-                ["delivered", "Delivered", counts.delivered, "Completed"],
+                ["all",        "Total Orders", counts.all,        fmtKSh(revenue) + " revenue"],
+                ["pending",    "Pending",      counts.pending,    "Awaiting confirmation"],
+                ["processing", "Processing",   counts.processing, "In preparation"],
+                ["shipped",    "Shipped",      counts.shipped,    "On the way"],
+                ["delivered",  "Delivered",    counts.delivered,  "Completed"],
               ]
                 .map(
                   ([s, label, v, sub]) => `
-                <div class="m-order-stat ${state.statusFilter === s ? "is-active" : ""}" onclick="setFilter('${s}')">
+                <div class="m-order-stat m-order-stat--${s} ${state.statusFilter === s ? "is-active" : ""}" onclick="setFilter('${s}')">
                   <div class="m-order-stat__label">${label}</div>
-                  <div class="m-order-stat__value">${v}</div>
-                  <div class="m-order-stat__sub">${sub}</div>
+                  <div class="m-order-stat__value" id="ostat-${s}">${s === "all" ? v + " / " + fmtKSh(revenue) : v}</div>
+                  <div class="m-order-stat__sub" id="ostat-sub-${s}">${sub}</div>
                 </div>`,
                 )
                 .join("")}
@@ -568,6 +575,24 @@
             render();
           }
     
+          function refreshStats() {
+            const orders = DataStore.getOrders();
+            const revenue = orders.filter(o => o.status !== "cancelled").reduce((a, o) => a + (o.total || 0), 0);
+            const counts = {
+              all: orders.length,
+              pending: orders.filter(o => o.status === "pending").length,
+              processing: orders.filter(o => o.status === "processing").length,
+              shipped: orders.filter(o => o.status === "shipped").length,
+              delivered: orders.filter(o => o.status === "delivered").length,
+            };
+            const el = id => document.getElementById(id);
+            if (el("ostat-all"))        el("ostat-all").textContent        = counts.all + " / " + fmtKSh(revenue);
+            if (el("ostat-pending"))    el("ostat-pending").textContent    = counts.pending;
+            if (el("ostat-processing")) el("ostat-processing").textContent = counts.processing;
+            if (el("ostat-shipped"))    el("ostat-shipped").textContent    = counts.shipped;
+            if (el("ostat-delivered"))  el("ostat-delivered").textContent  = counts.delivered;
+          }
+
           function changeStatus(orderId, newStatus, selectEl) {
             const orders = DataStore.getOrders();
             const o = orders.find((x) => x.id === orderId);
@@ -576,8 +601,8 @@
             o.updatedAt = new Date().toISOString();
             localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
             Toast.show("Status updated to " + newStatus);
-            // Update the select's color class without full re-render
             selectEl.className = "m-order-status-sel s-" + newStatus;
+            refreshStats();
             MerchantLayout.refreshBadges();
           }
     
