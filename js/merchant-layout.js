@@ -262,10 +262,9 @@ const MerchantLayout = {
             </a>`,
           ).join("")}
           <div class="m-nav__divider"></div>
-          <a class="m-nav__link m-nav__link--store" href="index.html" target="_blank" rel="noopener">
+          <a class="m-nav__link m-nav__link--store" href="index.html">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             <span>View Store</span>
-            <svg class="m-nav__external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
           </a>
         </nav>
 
