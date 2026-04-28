@@ -913,13 +913,15 @@ const DataStore = {
   },
   async syncProductsToSupabase() {
     const sb = window._sbClient;
-    if (!sb) return;
+    if (!sb) return false;
     const products = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || "[]");
-    await sb.from("store_config").upsert({
+    const { error } = await sb.from("store_config").upsert({
       key: "products",
       value: products,
       updated_at: new Date().toISOString(),
     });
+    if (error) { console.error("[Sync] store_config upsert failed:", error.message); return false; }
+    return true;
   },
 
   /* ---------- 心愿单 ---------- */

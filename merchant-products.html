@@ -714,7 +714,7 @@
           function deleteOne(id) {
             if (!confirm("Delete this product? This cannot be undone.")) return;
             DataStore.deleteProduct(id);
-            if (window._sbClient) DataStore.syncProductsToSupabase().catch(() => {});
+            if (window._sbClient) DataStore.syncProductsToSupabase().then(ok => { if (!ok) Toast.show("⚠️ Sync failed — store_config table missing in Supabase", "error"); });
             state.selected.delete(id);
             Toast.show("Product deleted");
             render();
@@ -733,7 +733,7 @@
             if (kind === "delete") {
               if (!confirm(`Delete ${ids.length} products?`)) return;
               ids.forEach((id) => DataStore.deleteProduct(id));
-              if (window._sbClient) DataStore.syncProductsToSupabase().catch(() => {});
+              if (window._sbClient) DataStore.syncProductsToSupabase().then(ok => { if (!ok) Toast.show("⚠️ Sync failed — store_config table missing in Supabase", "error"); });
               Toast.show(`${ids.length} products deleted`);
               doneWithBulk();
               return;
@@ -746,7 +746,7 @@
               const list = DataStore.getProducts({ includeDrafts: true });
               ids.forEach((id) => { const p = list.find((x) => x.id === id); if (p) p.price = Math.round(n); });
               DataStore.saveProducts(list);
-              if (window._sbClient) DataStore.syncProductsToSupabase().catch(() => {});
+              if (window._sbClient) DataStore.syncProductsToSupabase().then(ok => { if (!ok) Toast.show("⚠️ Sync failed — store_config table missing in Supabase", "error"); });
               Toast.show(`Updated price to ${fmtKSh(n)} for ${ids.length} product${ids.length > 1 ? "s" : ""}`);
               doneWithBulk();
               return;
@@ -764,7 +764,7 @@
                 if (p) { p.category = targetCat.id; p.subcategory = targetCat.subcategories[0]?.id || ""; }
               });
               DataStore.saveProducts(list);
-              if (window._sbClient) DataStore.syncProductsToSupabase().catch(() => {});
+              if (window._sbClient) DataStore.syncProductsToSupabase().then(ok => { if (!ok) Toast.show("⚠️ Sync failed — store_config table missing in Supabase", "error"); });
               Toast.show(`Moved ${ids.length} products to ${targetCat.name}`);
               doneWithBulk();
               return;
@@ -776,7 +776,7 @@
                 if (p) { p.inStock = false; p.stockQty = 0; }
               });
               DataStore.saveProducts(list);
-              if (window._sbClient) DataStore.syncProductsToSupabase().catch(() => {});
+              if (window._sbClient) DataStore.syncProductsToSupabase().then(ok => { if (!ok) Toast.show("⚠️ Sync failed — store_config table missing in Supabase", "error"); });
               Toast.show(`Marked ${ids.length} products out of stock`);
               doneWithBulk();
               return;
