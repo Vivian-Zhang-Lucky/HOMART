@@ -906,7 +906,7 @@ const DataStore = {
       .from("store_config")
       .select("value")
       .eq("key", "products")
-      .single();
+      .maybeSingle();
     if (error || !data?.value || !Array.isArray(data.value) || data.value.length === 0) return false;
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(data.value));
     return true;
