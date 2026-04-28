@@ -597,6 +597,12 @@
 
       ProductPage.init();
       window.ProductPage = ProductPage;
+
+      if (window._sbClient) {
+        DataStore.fetchProductsFromSupabase().then(updated => {
+          if (updated) ProductPage.render();
+        }).catch(() => {});
+      }
     </script>
   </body>
 </html>

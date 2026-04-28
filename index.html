@@ -203,7 +203,10 @@
     <script src="js/supabase-chat.js"></script>
     <script src="js/layout.js"></script>
     <script>
+      (async () => {
       Layout.render("home");
+      // Sync latest product data from Supabase before rendering
+      if (window._sbClient) await DataStore.fetchProductsFromSupabase().catch(() => {});
 
       /* --------- Category tiles --------- */
       const catIcons = {
@@ -292,6 +295,7 @@
       }
       document.getElementById("featured-grid").innerHTML =
         DataStore.getProducts({ featured: true }).map(renderCard).join("");
+      })();
     </script>
   </body>
 </html>

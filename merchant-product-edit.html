@@ -936,6 +936,7 @@
             };
     
             DataStore.upsertProduct(patch);
+            if (window._sbClient) DataStore.syncProductsToSupabase().catch(() => {});
             Toast.show(
               isEditing
                 ? "Product updated"
@@ -949,6 +950,7 @@
           function deleteProd() {
             if (!confirm("Delete this product? This cannot be undone.")) return;
             DataStore.deleteProduct(form.id);
+            if (window._sbClient) DataStore.syncProductsToSupabase().catch(() => {});
             Toast.show("Product deleted");
             setTimeout(() => MerchantLayout.navigate("merchant-products.html", { pushState: true }), 400);
           }

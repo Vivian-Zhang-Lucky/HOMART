@@ -898,6 +898,30 @@ const DataStore = {
     return msg;
   },
 
+  /* ---------- Supabase product sync ---------- */
+  async fetchProductsFromSupabase() {
+    const sb = window._sbClient;
+    if (!sb) return false;
+    const { data, error } = await sb
+      .from("store_config")
+      .select("value")
+      .eq("key", "products")
+      .single();
+    if (error || !data?.value || !Array.isArray(data.value) || data.value.length === 0) return false;
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(data.value));
+    return true;
+  },
+  async syncProductsToSupabase() {
+    const sb = window._sbClient;
+    if (!sb) return;
+    const products = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || "[]");
+    await sb.from("store_config").upsert({
+      key: "products",
+      value: products,
+      updated_at: new Date().toISOString(),
+    });
+  },
+
   /* ---------- 心愿单 ---------- */
   getWishlist() {
     return JSON.parse(localStorage.getItem(STORAGE_KEYS.WISHLIST) || "[]");

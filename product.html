@@ -80,7 +80,7 @@
     <script>
       /* ---------- Load product ---------- */
       const productId = URLParams.get("id") || "p002";
-      const product = DataStore.getProduct(productId);
+      let product = DataStore.getProduct(productId);
 
       if (!product) {
         document.querySelector("main").innerHTML =
@@ -422,6 +422,15 @@
       renderPdp();
       renderTabs();
       renderRelated();
+
+      if (window._sbClient) {
+        DataStore.fetchProductsFromSupabase().then(updated => {
+          if (updated) {
+            const fresh = DataStore.getProduct(productId);
+            if (fresh) { product = fresh; renderPdp(); renderTabs(); renderRelated(); }
+          }
+        }).catch(() => {});
+      }
     </script>
 
     <style>

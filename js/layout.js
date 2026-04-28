@@ -389,7 +389,7 @@ const Layout = {
     }
   },
   async doLogout() {
-    if (window.Auth) await Auth.logout();
+    try { if (window.Auth) await Auth.logout(); } catch (e) {}
     Toast.show("Signed out");
     setTimeout(() => (location.href = "index.html"), 400);
   },
