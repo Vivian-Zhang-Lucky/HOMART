@@ -399,7 +399,7 @@
                 delivery: 800,
                 tax: 0,
                 total: subtotal + 800,
-                payment: ["mpesa", "bank", "card", "quote"][i % 4],
+                payment: ["mpesa", "bank"][i % 2],
               });
             });
           })();
@@ -514,12 +514,7 @@
                           { year: "numeric", month: "short", day: "numeric" },
                         );
                         const payLabel =
-                          {
-                            mpesa: "M-PESA",
-                            bank: "Bank",
-                            card: "Card",
-                            quote: "Quote",
-                          }[o.payment] || o.payment;
+                          { mpesa: "M-PESA", bank: "Bank Transfer" }[o.payment] || o.payment;
                         return `
                         <tr style="cursor:pointer" onclick="openDrawer('${o.id}')">
                           <td><b style="color:var(--ink-900);font-weight:600">${o.id}</b></td>
@@ -676,7 +671,7 @@
             <div class="m-drawer__section">
               <b>Order info</b>
               <div class="m-drawer__kv">
-                <span>Payment</span><span>${{ mpesa: "M-PESA", bank: "Bank Transfer", card: "Card", quote: "Pay After Quotation" }[o.payment] || o.payment}</span>
+                <span>Payment</span><span>${{ mpesa: "M-PESA", bank: "Bank Transfer" }[o.payment] || o.payment}</span>
                 <span>Status</span><span style="text-transform:capitalize">${o.status}</span>
                 <span>Placed</span><span>${date}</span>
               </div>

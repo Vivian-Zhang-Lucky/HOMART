@@ -1145,6 +1145,10 @@
             SupabaseChat.markMerchantRead(id)
               .then(() => MerchantLayout.refreshBadges())
               .catch((e) => console.error("markMerchantRead failed:", e));
+            // Always fetch fresh messages from Supabase when opening a conversation
+            void SupabaseChat.listMessages(id)
+              .then((msgs) => { c.messages = msgs; renderThread(); })
+              .catch(() => {});
           } else if (!isPlaceholder()) {
             DataStore.markConversationRead(id, "merchant");
           }

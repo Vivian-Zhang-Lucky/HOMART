@@ -308,9 +308,6 @@ const MerchantLayout = {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <span class="m-icon-btn__dot" id="m-notif-dot" hidden></span>
           </button>
-          <button class="m-icon-btn m-help-btn" aria-label="Help" onclick="Toast.show('Help centre coming soon')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12" y2="17"/></svg>
-          </button>
           <button class="m-status-toggle" id="m-store-status" onclick="MerchantLayout.toggleStore(this)">
             <span class="m-status-dot"></span>
             <span class="m-status-label">Store Online</span>

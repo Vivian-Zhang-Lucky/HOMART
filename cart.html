@@ -123,7 +123,7 @@
 
       const state = {
         step: 1, // 1=Cart 2=Delivery 3=Payment 4=Confirm
-        payment: "mpesa", // mpesa | bank | card | quote
+        payment: "mpesa", // mpesa | bank
         form: {
           name: "",
           phone: "",
@@ -226,9 +226,9 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Live Chat
               </button>
-              <button class="btn btn--secondary" onclick="Toast.show('WhatsApp: +254 700 123 456','info')">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.94 11.94 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.12.56 4.18 1.62 6L0 24l6.18-1.62A12 12 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.25-6.19-3.48-8.52z"/></svg>
-                WhatsApp
+                  <button class="btn btn--secondary" href="category.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Browse Products
               </button>
             </div>
             <div class="assist-chat__feats">
@@ -351,7 +351,6 @@
 
       /* ---------- Delivery form ---------- */
       function renderDeliveryCard() {
-        const disabled = state.step < 2 ? "inert" : "";
         const countyOpts = KENYA_COUNTIES.map(
           (c) =>
             `<option value="${c}" ${state.form.county === c ? "selected" : ""}>${c}</option>`,
@@ -365,7 +364,7 @@
           .join("");
 
         return `
-        <div class="card-panel ${disabled}" style="${state.step < 2 ? "opacity:.55;pointer-events:none" : ""}">
+        <div class="card-panel">
           <h2 class="panel-head"><span class="panel-num">1.</span> Delivery Details</h2>
           <div class="form-grid">
             <div class="field">
@@ -420,7 +419,6 @@
 
       /* ---------- Payment ---------- */
       function renderPaymentCard() {
-        const disabled = state.step < 3;
         const opts = [
           {
             id: "mpesa",
@@ -434,21 +432,9 @@
             desc: "Direct deposit to our company bank account.",
             icon: "bank",
           },
-          {
-            id: "card",
-            name: "Card Payment",
-            desc: "Pay securely with Visa or Mastercard.",
-            icon: "card",
-          },
-          {
-            id: "quote",
-            name: "Pay After Quotation",
-            desc: "Submit request and pay after quotation approval.",
-            icon: "quote",
-          },
         ];
         return `
-        <div class="card-panel ${disabled ? "is-disabled" : ""}" style="${disabled ? "opacity:.55;pointer-events:none" : ""}">
+        <div class="card-panel">
           <h2 class="panel-head"><span class="panel-num">2.</span> Payment Method</h2>
           <div class="pay-grid">
             ${opts
@@ -490,11 +476,11 @@
       function renderConfirmation(order) {
         return `
         <div class="cart-layout" style="grid-template-columns:1fr">
-          <div class="card-panel" style="text-align:center;padding:60px 24px">
+          <div class="card-panel" style="padding:60px 24px;display:flex;flex-direction:column;align-items:center;text-align:center">
             <div class="confirm-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <h2 style="font-family:var(--font-display);font-size:30px;font-weight:800;margin-bottom:8px">Order Placed Successfully!</h2>
+            <h2 style="font-family:var(--font-display);font-size:30px;font-weight:800;margin-bottom:8px;text-align:center">Order Placed Successfully!</h2>
             <p style="color:var(--ink-500);margin-bottom:6px">Thank you for your order. We'll contact you shortly.</p>
             <p style="color:var(--ink-700);margin-bottom:28px"><b>Order ID:</b> ${order.id}</p>
 
@@ -512,14 +498,7 @@
         </div>`;
       }
       function paymentLabel(p) {
-        return (
-          {
-            mpesa: "M-PESA",
-            bank: "Bank Transfer",
-            card: "Card Payment",
-            quote: "Pay After Quotation",
-          }[p] || p
-        );
+        return ({ mpesa: "M-PESA", bank: "Bank Transfer" }[p] || p);
       }
 
       /* ---------- Main render ---------- */
@@ -540,9 +519,9 @@
         body.innerHTML = `
         <div class="cart-layout">
           <div class="cart-col-main">
-            ${state.step >= 1 ? renderCartCard() : ""}
-            ${state.step >= 2 ? renderDeliveryCard() : ""}
-            ${state.step >= 3 ? renderPaymentCard() : ""}
+            ${state.step === 1 ? renderCartCard() : ""}
+            ${state.step === 2 ? renderDeliveryCard() : ""}
+            ${state.step === 3 ? renderPaymentCard() : ""}
           </div>
           ${renderSummaryPanel()}
         </div>`;
@@ -616,6 +595,17 @@
           payment: state.payment,
           customer: { ...state.form },
         });
+        // Reduce stock for each ordered item
+        const allProds = DataStore.getProducts({ includeDrafts: true });
+        t.items.forEach((item) => {
+          const p = allProds.find((x) => x.id === item.productId);
+          if (p) {
+            p.stockQty = Math.max(0, (p.stockQty || 0) - item.qty);
+            p.inStock = p.stockQty > 0;
+          }
+        });
+        DataStore.saveProducts(allProds);
+
         Cart.clear();
         state.step = 4;
         renderSteps();
