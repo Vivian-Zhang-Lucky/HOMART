@@ -179,9 +179,13 @@ const Auth = {
 
   async logout() {
     const sb = this._getSb();
-    if (sb) await sb.auth.signOut();
+    try { if (sb) await sb.auth.signOut(); } catch {}
     this._user = null;
     localStorage.removeItem(AUTH_CACHE_KEY);
+    // Clear Supabase's own session tokens so getSession() returns null on next load
+    Object.keys(localStorage)
+      .filter(k => k.startsWith("sb-") && k.endsWith("-auth-token"))
+      .forEach(k => localStorage.removeItem(k));
   },
 
   async requireMerchant() {
