@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Product · HOMART Merchant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/merchant.css" />
+
+    <style>
+      .m-edit-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 20px;
+        align-items: flex-start;
+      }
+      .m-edit-main {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .m-form-head {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: var(--ink-900);
+      }
+
+      .m-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+      .m-form-grid--full > * {
+        grid-column: 1 / -1;
+      }
+      .m-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .m-field--full {
+        grid-column: 1 / -1;
+      }
+      .m-field label {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink-800, var(--ink-900));
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .m-field label .req {
+        color: #ef4444;
+      }
+      .m-field label .opt {
+        color: var(--ink-500);
+        font-weight: 400;
+        margin-left: 4px;
+      }
+      .m-field input,
+      .m-field select,
+      .m-field textarea {
+        width: 100%;
+        font-family: inherit;
+        font-size: 14px;
+        background: white;
+        color: var(--ink-900);
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-md);
+        padding: 10px 12px;
+        min-height: 42px;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .m-field input:focus,
+      .m-field select:focus,
+      .m-field textarea:focus {
+        outline: 0;
+        border-color: var(--green-700);
+        box-shadow: 0 0 0 3px rgba(30, 74, 52, 0.12);
+      }
+      .m-field select {
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        background: white
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")
+          no-repeat right 12px center / 14px;
+        padding-right: 36px;
+      }
+      .m-field textarea {
+        resize: vertical;
+        line-height: 1.5;
+        min-height: 90px;
+      }
+      .m-char-counter {
+        text-align: right;
+        font-size: 11.5px;
+        color: var(--ink-500);
+        margin-top: -4px;
+      }
+
+      /* Tag chips */
+      .m-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 12px;
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-md);
+        min-height: 42px;
+      }
+      .m-tags:focus-within {
+        border-color: var(--green-700);
+        box-shadow: 0 0 0 3px rgba(30, 74, 52, 0.12);
+      }
+      .m-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: var(--green-50);
+        color: var(--green-700);
+        border-radius: 12px;
+        font-size: 12.5px;
+        font-weight: 500;
+      }
+      .m-tag button {
+        background: none;
+        color: inherit;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      .m-tag button svg {
+        width: 12px;
+        height: 12px;
+      }
+      .m-tags input {
+        border: 0;
+        outline: 0;
+        padding: 4px;
+        background: transparent;
+        font-size: 13px;
+        flex-grow: 1;
+        min-width: 160px;
+      }
+
+      /* Image upload */
+      .m-upload {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 1.5px dashed var(--ink-300, var(--ink-400));
+        border-radius: var(--r-md);
+        background: var(--green-50);
+        padding: 36px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .m-upload:hover {
+        border-color: var(--green-700);
+      }
+      .m-upload svg {
+        display: block;
+        width: 36px;
+        height: 36px;
+        color: var(--green-700);
+        flex-shrink: 0;
+      }
+      .m-upload b {
+        display: block;
+        font-size: 14px;
+        color: var(--ink-900);
+      }
+      .m-upload span {
+        font-size: 12.5px;
+        color: var(--ink-500);
+      }
+
+      .m-img-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .m-img-tile {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: var(--r-md);
+        overflow: hidden;
+        background: var(--ink-50);
+        border: 1px solid var(--ink-200);
+      }
+      .m-img-tile img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .m-img-del {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--green-700);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .m-img-del svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      .m-dim-row {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        gap: 8px;
+        align-items: center;
+      }
+      .m-dim-row .x {
+        color: var(--ink-500);
+      }
+      .m-dim-hint {
+        font-size: 11px;
+        color: var(--ink-500);
+        margin-top: 4px;
+      }
+
+      /* Right column */
+      .m-side-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: sticky;
+        top: 88px;
+      }
+      .m-publish {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .m-publish .btn {
+        width: 100%;
+        padding: 12px;
+      }
+      .m-btn-danger {
+        background: white;
+        border: 1.5px solid #fecaca;
+        color: #dc2626;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+        border-radius: var(--r-md);
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .m-btn-danger:hover {
+        background: #fef2f2;
+        border-color: #ef4444;
+      }
+      .m-btn-danger svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .m-preview-card {
+        border-radius: var(--r-md);
+        overflow: hidden;
+        background: var(--ink-50);
+      }
+      .m-preview-card__img {
+        aspect-ratio: 4/3;
+        width: 100%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .m-preview-card__img img {
+        max-width: 70%;
+        max-height: 70%;
+        object-fit: contain;
+      }
+      .m-preview-card__body {
+        padding: 14px 16px;
+        background: white;
+      }
+      .m-preview-card__body h3 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ink-900);
+        margin-bottom: 2px;
+      }
+      .m-preview-card__body .cat {
+        font-size: 12px;
+        color: var(--ink-500);
+        margin-bottom: 10px;
+      }
+      .m-preview-card__foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .m-preview-card__price {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--ink-900);
+      }
+
+      .m-tip {
+        display: flex;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: var(--r-md);
+        background: var(--ink-50);
+        align-items: flex-start;
+      }
+      .m-tip + .m-tip {
+        margin-top: 8px;
+      }
+      .m-tip__icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--green-100);
+        color: var(--green-700);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .m-tip__icon svg {
+        width: 14px;
+        height: 14px;
+      }
+      .m-tip b {
+        display: block;
+        font-size: 13px;
+        color: var(--ink-900);
+        margin-bottom: 2px;
+      }
+      .m-tip span {
+        font-size: 12px;
+        color: var(--ink-500);
+        line-height: 1.45;
+      }
+
+      .m-back-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: white;
+        border: 1px solid var(--ink-200);
+        color: var(--ink-700);
+        cursor: pointer;
+      }
+      .m-back-link:hover {
+        color: var(--ink-900);
+      }
+      .m-back-link svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      @media (max-width: 1100px) {
+        .m-edit-layout {
+          grid-template-columns: 1fr;
+        }
+        .m-side-stack {
+          position: static;
+        }
+        .m-form-grid {
+          grid-template-columns: 1fr;
+        }
+        .m-img-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/merchant-layout.js"></script>
+    <script>
+  (async () => {
+    const productId = URLParams.get("id");
+          const isEditing = !!productId;
+          const pageTitle = isEditing ? "Edit Product" : "Add Product";
+    
+          if (
+            !await MerchantLayout.render({
+              active: "products",
+              title: pageTitle,
+              headerExtra: `<a class="m-back-link" href="merchant-products.html" aria-label="Back">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        </a>`,
+            })
+          )
+            return;
+    
+          /* ---------- Load product (or start fresh) ---------- */
+          const existing = isEditing ? DataStore.getProduct(productId, { includeDrafts: true }) : null;
+          if (isEditing && !existing) {
+            document.getElementById("m-content").innerHTML =
+              '<div class="m-panel" style="text-align:center;padding:60px"><h2 style="font-family:var(--font-display);font-size:24px;margin-bottom:10px">Product not found</h2><p style="color:var(--ink-500);margin-bottom:20px">This product may have been deleted.</p><a class="btn btn--primary" href="merchant-products.html">Back to products</a></div>';
+            return;
+          }
+    
+          const form = existing
+            ? JSON.parse(JSON.stringify(existing))
+            : {
+                id: "p_" + Date.now().toString(36),
+                name: "",
+                sku: "",
+                category: "bathroom-fixtures",
+                subcategory: "",
+                price: 0,
+                salePrice: null,
+                stockQty: 0,
+                inStock: true,
+                draft: false,
+                shortDesc: "",
+                description: "",
+                longDescription: "",
+                specs: {},
+                tags: [],
+                material: "",
+                brand: "HOMART",
+                image: "",
+                images: [],
+                weight: null,
+                dimensions: { l: null, w: null, h: null },
+                moq: null,
+                featured: false,
+                requestPrice: false,
+                currency: "KSh",
+              };
+    
+          // Specifications as a joined string for textarea
+          const specsText = Object.entries(form.specs || {})
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(" | ");
+    
+          /* ---------- Render ---------- */
+          document.getElementById("m-content").innerHTML = `
+          <div class="m-edit-layout">
+            <!-- MAIN -->
+            <div class="m-edit-main">
+    
+              <div class="m-panel">
+                <div class="m-form-head">Product Information</div>
+                <div class="m-form-grid">
+                  <div class="m-field">
+                    <label>Product Name <span class="req">*</span></label>
+                    <input id="f-name" type="text" placeholder="e.g. Brass Basin Mixer Tap"
+                           value="${escapeAttr(form.name)}">
+                  </div>
+                  <div class="m-field">
+                    <label>SKU <span class="req">*</span></label>
+                    <input id="f-sku" type="text" placeholder="e.g. BBMT-001"
+                           value="${escapeAttr(form.sku)}">
+                  </div>
+    
+                  <div class="m-field">
+                    <label>Category <span class="req">*</span></label>
+                    <select id="f-cat" onchange="onCatChange(this.value)">
+                      ${DataStore.getCategories()
+                        .map(
+                          (c) =>
+                            `<option value="${c.id}" ${form.category === c.id ? "selected" : ""}>${c.name}</option>`,
+                        )
+                        .join("")}
+                    </select>
+                  </div>
+                  <div class="m-field">
+                    <label>Subcategory</label>
+                    <select id="f-subcat"></select>
+                  </div>
+    
+                  <div class="m-field">
+                    <label>Price (KSh) <span class="req">*</span></label>
+                    <input id="f-price" type="number" min="0" placeholder="0"
+                           value="${form.price || ""}">
+                  </div>
+                  <div class="m-field">
+                    <label>Sale Price (KSh) <span class="opt">(optional)</span></label>
+                    <input id="f-saleprice" type="number" min="0" placeholder="e.g. 4,999"
+                           value="${form.salePrice || ""}">
+                  </div>
+    
+                  <div class="m-field">
+                    <label>Stock Quantity <span class="req">*</span></label>
+                    <input id="f-stock" type="number" min="0" placeholder="0"
+                           value="${form.stockQty ?? ""}">
+                  </div>
+                  <div class="m-field">
+                    <label>Status <span class="req">*</span></label>
+                    <select id="f-status">
+                      <option value="in"    ${form.inStock && !form.draft ? "selected" : ""}>In Stock</option>
+                      <option value="out"   ${!form.inStock ? "selected" : ""}>Out of Stock</option>
+                      <option value="draft" ${form.draft ? "selected" : ""}>Draft (not published)</option>
+                    </select>
+                  </div>
+    
+                  <div class="m-field m-field--full">
+                    <label>Short Description <span class="req">*</span></label>
+                    <textarea id="f-shortdesc" maxlength="200" rows="3" placeholder="A brief one-paragraph description…"
+                      oninput="countChars('f-shortdesc','c-shortdesc',200)">${escapeHtml(form.shortDesc || form.description || "")}</textarea>
+                    <div class="m-char-counter"><span id="c-shortdesc">0</span>/200</div>
+                  </div>
+    
+                  <div class="m-field m-field--full">
+                    <label>Product Specifications</label>
+                    <textarea id="f-specs" maxlength="300" rows="3" placeholder='e.g. Material: Brass | Finish: Chrome Plated | Warranty: 5 years'
+                      oninput="countChars('f-specs','c-specs',300)">${escapeHtml(specsText)}</textarea>
+                    <div class="m-char-counter"><span id="c-specs">0</span>/300</div>
+                    <p class="m-dim-hint">Separate each spec with " | " — use "Key: Value" format.</p>
+                  </div>
+    
+                  <div class="m-field m-field--full">
+                    <label>Tags</label>
+                    <div class="m-tags" id="tags-wrap"></div>
+                  </div>
+                </div>
+              </div>
+    
+              <div class="m-panel">
+                <div class="m-form-head">Product Images</div>
+                <label class="m-upload">
+                  <input type="file" id="img-upload" accept="image/png,image/jpeg,image/webp" multiple hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <b>Drag &amp; drop images here or click to upload</b>
+                  <span>PNG, JPG or WEBP (Max. 5MB each)</span>
+                </label>
+                <div class="m-img-grid" id="img-grid"></div>
+              </div>
+    
+              <div class="m-panel">
+                <div class="m-form-head">Shipping &amp; Inventory</div>
+                <div class="m-form-grid">
+                  <div class="m-field">
+                    <label>Weight (kg)</label>
+                    <input id="f-weight" type="number" step="0.01" min="0" placeholder="0.00"
+                           value="${form.weight ?? ""}">
+                  </div>
+                  <div class="m-field">
+                    <label>Dimensions (cm)</label>
+                    <div class="m-dim-row">
+                      <input id="f-dim-l" type="number" min="0" placeholder="L" value="${form.dimensions?.l ?? ""}">
+                      <span class="x">×</span>
+                      <input id="f-dim-w" type="number" min="0" placeholder="W" value="${form.dimensions?.w ?? ""}">
+                      <span class="x">×</span>
+                      <input id="f-dim-h" type="number" min="0" placeholder="H" value="${form.dimensions?.h ?? ""}">
+                    </div>
+                    <p class="m-dim-hint">L × W × H</p>
+                  </div>
+                  <div class="m-field m-field--full">
+                    <label>Minimum Order Quantity (MOQ)</label>
+                    <input id="f-moq" type="number" min="1" placeholder="1"
+                           value="${form.moq ?? ""}">
+                  </div>
+                </div>
+              </div>
+    
+            </div>
+    
+            <!-- SIDE -->
+            <aside class="m-side-stack">
+              <div class="m-panel">
+                <div class="m-form-head">Publish</div>
+                <div class="m-publish">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;padding:4px 0;color:var(--ink-800)">
+                    <input type="checkbox" id="f-featured" ${form.featured ? "checked" : ""} style="width:16px;height:16px;accent-color:var(--green-700);cursor:pointer;">
+                    Feature on Homepage
+                  </label>
+                  <button class="btn btn--secondary" onclick="save({ draft:true })">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Save Draft
+                  </button>
+                  <button class="btn btn--primary" onclick="save({})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    ${isEditing ? "Update Product" : "Publish Product"}
+                  </button>
+                  ${
+                    isEditing
+                      ? `
+                    <button class="m-btn-danger" onclick="deleteProd()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                      Delete Product
+                    </button>
+                  `
+                      : ""
+                  }
+                </div>
+              </div>
+    
+              <div class="m-panel">
+                <div class="m-form-head">Preview Card</div>
+                <div class="m-preview-card" id="preview">
+                  <div class="m-preview-card__img"><img id="prev-img" src="${form.image || FALLBACK_IMG}" alt=""></div>
+                  <div class="m-preview-card__body">
+                    <h3 id="prev-name">${escapeHtml(form.name || "Product name")}</h3>
+                    <div class="cat" id="prev-cat">—</div>
+                    <div class="m-preview-card__foot">
+                      <div class="m-preview-card__price" id="prev-price">${fmtKSh(form.price)}</div>
+                      <span class="m-pill m-pill--in" id="prev-status">In Stock</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+    
+              <div class="m-panel">
+                <div class="m-form-head">Category &amp; Pricing Tips</div>
+                <div class="m-tip">
+                  <div class="m-tip__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div>
+                    <b>Use clear categories</b>
+                    <span>Place your product in the right category so customers can find it easily.</span>
+                  </div>
+                </div>
+                <div class="m-tip">
+                  <div class="m-tip__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div>
+                    <b>Keep prices updated</b>
+                    <span>Regularly review and update prices to stay competitive in the market.</span>
+                  </div>
+                </div>
+                <div class="m-tip">
+                  <div class="m-tip__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div>
+                    <b>Set MOQ for bulk orders</b>
+                    <span>Setting a minimum order quantity helps you manage stock and reduce small orders.</span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        `;
+    
+          /* ---------- Helpers ---------- */
+          function escapeHtml(s) {
+            return String(s || "").replace(
+              /[&<>"']/g,
+              (m) =>
+                ({
+                  "&": "&amp;",
+                  "<": "&lt;",
+                  ">": "&gt;",
+                  '"': "&quot;",
+                  "'": "&#39;",
+                })[m],
+            );
+          }
+          function escapeAttr(s) {
+            return escapeHtml(s);
+          }
+          function countChars(inputId, counterId, max) {
+            const v = document.getElementById(inputId).value;
+            document.getElementById(counterId).textContent = v.length;
+          }
+    
+          /* ---------- Subcategory cascade ---------- */
+          function renderSubcat(selected = "") {
+            const cat = DataStore.getCategory(
+              document.getElementById("f-cat").value,
+            );
+            const subs = cat ? cat.subcategories : [];
+            const sel = document.getElementById("f-subcat");
+            sel.innerHTML = subs.length
+              ? subs
+                  .map(
+                    (s) =>
+                      `<option value="${s.id}" ${s.id === selected ? "selected" : ""}>${s.name}</option>`,
+                  )
+                  .join("")
+              : '<option value="">—</option>';
+          }
+          function onCatChange(v) {
+            form.category = v;
+            renderSubcat();
+            updatePreviewCat();
+          }
+          renderSubcat(form.subcategory);
+    
+          /* ---------- Tags ---------- */
+          let tags = Array.isArray(form.tags) ? [...form.tags] : [];
+          function renderTags() {
+            const wrap = document.getElementById("tags-wrap");
+            wrap.innerHTML =
+              tags
+                .map(
+                  (t, i) => `
+            <span class="m-tag">${escapeHtml(t)}
+              <button type="button" onclick="removeTag(${i})" aria-label="Remove">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </span>
+          `,
+                )
+                .join("") +
+              `
+            <input type="text" id="tag-input" placeholder="Add a tag and press Enter"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault(); addTag(this.value); this.value=''}">`;
+          }
+          function addTag(t) {
+            t = (t || "").trim();
+            if (!t || tags.includes(t)) return;
+            tags.push(t);
+            renderTags();
+            document.getElementById("tag-input")?.focus();
+          }
+          function removeTag(i) {
+            tags.splice(i, 1);
+            renderTags();
+          }
+          renderTags();
+    
+          /* ---------- Images ---------- */
+          let images =
+            Array.isArray(form.images) && form.images.length
+              ? [...form.images]
+              : form.image
+                ? [form.image]
+                : [];
+          function renderImages() {
+            const grid = document.getElementById("img-grid");
+            grid.innerHTML = images
+              .map(
+                (src, i) => `
+            <div class="m-img-tile">
+              <img src="${src}" alt="" onerror="this.src='${FALLBACK_IMG}'">
+              <button class="m-img-del" onclick="removeImage(${i})" aria-label="Remove">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>`,
+              )
+              .join("");
+            // Update preview image to first
+            document.getElementById("prev-img").src = images[0] || FALLBACK_IMG;
+          }
+          function removeImage(i) {
+            images.splice(i, 1);
+            renderImages();
+          }
+    
+          document
+            .getElementById("img-upload")
+            .addEventListener("change", async (e) => {
+              const files = Array.from(e.target.files || []);
+              for (const f of files) {
+                if (f.size > 5 * 1024 * 1024) {
+                  Toast.show(`${f.name} is larger than 5MB`, "error");
+                  continue;
+                }
+                const dataUrl = await new Promise((res) => {
+                  const r = new FileReader();
+                  r.onload = () => res(r.result);
+                  r.readAsDataURL(f);
+                });
+                images.push(dataUrl);
+              }
+              renderImages();
+            });
+          // drag & drop
+          document
+            .querySelector(".m-upload")
+            .addEventListener("click", () =>
+              document.getElementById("img-upload").click(),
+            );
+          document.querySelector(".m-upload").addEventListener("dragover", (e) => {
+            e.preventDefault();
+          });
+          document
+            .querySelector(".m-upload")
+            .addEventListener("drop", async (e) => {
+              e.preventDefault();
+              const files = Array.from(e.dataTransfer.files || []);
+              for (const f of files) {
+                if (!/^image\//.test(f.type)) continue;
+                if (f.size > 5 * 1024 * 1024) {
+                  Toast.show(`${f.name} is larger than 5MB`, "error");
+                  continue;
+                }
+                const dataUrl = await new Promise((res) => {
+                  const r = new FileReader();
+                  r.onload = () => res(r.result);
+                  r.readAsDataURL(f);
+                });
+                images.push(dataUrl);
+              }
+              renderImages();
+            });
+          renderImages();
+    
+          /* ---------- Live preview ---------- */
+          ["f-name", "f-price", "f-stock", "f-status"].forEach((id) => {
+            document.getElementById(id).addEventListener("input", updatePreview);
+            document.getElementById(id).addEventListener("change", updatePreview);
+          });
+          document
+            .getElementById("f-cat")
+            .addEventListener("change", updatePreview);
+          function updatePreview() {
+            document.getElementById("prev-name").textContent =
+              document.getElementById("f-name").value || "Product name";
+            document.getElementById("prev-price").textContent = fmtKSh(
+              parseFloat(document.getElementById("f-price").value) || 0,
+            );
+            updatePreviewCat();
+            const status = document.getElementById("f-status").value;
+            const pill = document.getElementById("prev-status");
+            pill.className =
+              "m-pill m-pill--" +
+              (status === "out" ? "out" : status === "draft" ? "draft" : "in");
+            pill.textContent =
+              status === "out"
+                ? "Out of Stock"
+                : status === "draft"
+                  ? "Draft"
+                  : "In Stock";
+          }
+          function updatePreviewCat() {
+            const cat = DataStore.getCategory(
+              document.getElementById("f-cat").value,
+            );
+            document.getElementById("prev-cat").textContent = cat ? cat.name : "—";
+          }
+          updatePreview();
+          countChars("f-shortdesc", "c-shortdesc", 200);
+          countChars("f-specs", "c-specs", 300);
+    
+          /* ---------- Save ---------- */
+          function save({ draft = false } = {}) {
+            const get = (id) => document.getElementById(id).value;
+            const name = get("f-name").trim();
+            const sku = get("f-sku").trim();
+            const price = parseFloat(get("f-price")) || 0;
+            const stock = parseInt(get("f-stock")) || 0;
+    
+            if (!name) {
+              Toast.show("Product name is required", "error");
+              return;
+            }
+            if (!sku) {
+              Toast.show("SKU is required", "error");
+              return;
+            }
+            if (!price && !draft) {
+              Toast.show("Price must be greater than 0", "error");
+              return;
+            }
+    
+            const statusSel = get("f-status");
+            const inStock = statusSel !== "out" && stock > 0;
+    
+            // Parse specs text
+            const specs = {};
+            get("f-specs")
+              .split("|")
+              .forEach((pair) => {
+                const m = pair.split(":");
+                if (m.length >= 2) {
+                  const k = m[0].trim();
+                  const v = m.slice(1).join(":").trim();
+                  if (k) specs[k] = v;
+                }
+              });
+    
+            const patch = {
+              ...form,
+              name,
+              sku,
+              category: get("f-cat"),
+              subcategory: get("f-subcat"),
+              price,
+              salePrice: parseFloat(get("f-saleprice")) || null,
+              stockQty: stock,
+              inStock,
+              draft: draft || statusSel === "draft",
+              featured: document.getElementById("f-featured").checked,
+              shortDesc: get("f-shortdesc"),
+              description: get("f-shortdesc"),
+              specs,
+              tags,
+              image: images[0] || form.image || "",
+              images: images.slice(),
+              weight: parseFloat(get("f-weight")) || null,
+              dimensions: {
+                l: parseFloat(get("f-dim-l")) || null,
+                w: parseFloat(get("f-dim-w")) || null,
+                h: parseFloat(get("f-dim-h")) || null,
+              },
+              moq: parseInt(get("f-moq")) || null,
+              updatedAt: new Date().toISOString(),
+            };
+    
+            DataStore.upsertProduct(patch);
+            Toast.show(
+              isEditing
+                ? "Product updated"
+                : draft
+                  ? "Draft saved"
+                  : "Product published",
+            );
+            setTimeout(() => MerchantLayout.navigate("merchant-products.html", { pushState: true }), 500);
+          }
+
+          function deleteProd() {
+            if (!confirm("Delete this product? This cannot be undone.")) return;
+            DataStore.deleteProduct(form.id);
+            Toast.show("Product deleted");
+            setTimeout(() => MerchantLayout.navigate("merchant-products.html", { pushState: true }), 400);
+          }
+  })();
+</script>
+  </body>
+</html>

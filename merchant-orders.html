@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orders · HOMART Merchant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/merchant.css" />
+
+    <style>
+      .m-order-statbar {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .m-order-stat {
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 16px 18px;
+        cursor: pointer;
+        transition: border-color 0.15s;
+      }
+      .m-order-stat:hover {
+        border-color: var(--green-700);
+      }
+      .m-order-stat.is-active {
+        border-color: var(--green-700);
+        background: var(--green-50);
+      }
+      .m-order-stat__label {
+        font-size: 12.5px;
+        color: var(--ink-500);
+        margin-bottom: 4px;
+      }
+      .m-order-stat__value {
+        font-family: var(--font-display);
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--ink-900);
+        letter-spacing: -0.02em;
+      }
+      .m-order-stat__sub {
+        font-size: 11.5px;
+        color: var(--ink-500);
+        margin-top: 2px;
+      }
+
+      .m-order-table td {
+        padding: 14px 12px;
+        vertical-align: middle;
+        font-size: 13.5px;
+        border-bottom: 1px solid var(--ink-100);
+      }
+      .m-order-table th {
+        text-align: left;
+        padding: 12px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink-500);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid var(--ink-100);
+      }
+      .m-order-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .m-order-table tbody tr:hover {
+        background: var(--ink-50);
+      }
+
+      .m-order-items {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .m-order-items img {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: var(--ink-50);
+        flex-shrink: 0;
+        margin-right: -8px;
+        border: 2px solid white;
+      }
+      .m-order-items img:last-of-type {
+        margin-right: 0;
+      }
+      .m-order-items span {
+        font-size: 12px;
+        color: var(--ink-500);
+        margin-left: 8px;
+      }
+
+      .m-order-customer {
+        line-height: 1.3;
+      }
+      .m-order-customer b {
+        display: block;
+        color: var(--ink-900);
+        font-weight: 600;
+      }
+      .m-order-customer span {
+        font-size: 12px;
+        color: var(--ink-500);
+      }
+
+      .m-order-status-sel {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 0;
+        cursor: pointer;
+        font-family: inherit;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 6px center;
+        background-size: 10px;
+        padding-right: 22px;
+      }
+      .m-order-status-sel.s-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+      .m-order-status-sel.s-processing {
+        background-color: #dbeafe;
+        color: #1e40af;
+      }
+      .m-order-status-sel.s-shipped {
+        background-color: #ede9fe;
+        color: #5b21b6;
+      }
+      .m-order-status-sel.s-delivered {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .m-order-status-sel.s-cancelled {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+
+      .m-order-empty {
+        text-align: center;
+        padding: 60px 24px;
+        color: var(--ink-500);
+      }
+      .m-order-empty svg {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 14px;
+        color: var(--ink-300, var(--ink-400));
+      }
+      .m-order-empty b {
+        display: block;
+        font-size: 17px;
+        color: var(--ink-900);
+        margin-bottom: 6px;
+      }
+
+      /* Detail drawer */
+      .m-drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 400;
+        background: rgba(15, 15, 15, 0.5);
+        display: none;
+        align-items: stretch;
+        justify-content: flex-end;
+      }
+      .m-drawer.is-open {
+        display: flex;
+      }
+      .m-drawer__panel {
+        width: 520px;
+        max-width: 100%;
+        background: white;
+        padding: 24px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .m-drawer__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .m-drawer__head h2 {
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .m-drawer__close {
+        background: transparent;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        color: var(--ink-500);
+        cursor: pointer;
+      }
+      .m-drawer__close:hover {
+        background: var(--ink-50);
+        color: var(--ink-900);
+      }
+      .m-drawer__section b {
+        display: block;
+        font-size: 13px;
+        color: var(--ink-900);
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .m-drawer__kv {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 6px 12px;
+        font-size: 13px;
+      }
+      .m-drawer__kv > :nth-child(odd) {
+        color: var(--ink-500);
+      }
+      .m-drawer__kv > :nth-child(even) {
+        color: var(--ink-900);
+      }
+      .m-drawer__items {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .m-drawer__item {
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+        background: var(--ink-50);
+        border-radius: var(--r-md);
+      }
+      .m-drawer__item img {
+        width: 48px;
+        height: 48px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: white;
+        flex-shrink: 0;
+      }
+      .m-drawer__item b {
+        display: block;
+        font-size: 13.5px;
+        color: var(--ink-900);
+        margin-bottom: 2px;
+      }
+      .m-drawer__item span {
+        font-size: 12px;
+        color: var(--ink-500);
+      }
+      .m-drawer__totals {
+        padding: 14px;
+        background: var(--ink-50);
+        border-radius: var(--r-md);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 13.5px;
+      }
+      .m-drawer__totals div {
+        display: flex;
+        justify-content: space-between;
+      }
+      .m-drawer__totals .total {
+        padding-top: 8px;
+        border-top: 1px solid var(--ink-200);
+        font-weight: 700;
+        font-size: 15px;
+      }
+      @media (max-width: 1200px) {
+        .m-order-statbar {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/merchant-layout.js"></script>
+    <script>
+  (async () => {
+    if (!await MerchantLayout.render({ active: "orders", title: "Orders" }))
+            return;
+    
+          const state = { statusFilter: "all", q: "" };
+    
+          /* Seed a few demo orders if none exist, so the table has content */
+          (function seedDemoOrders() {
+            if (DataStore.getOrders().length > 0) return;
+            const products = DataStore.getProducts();
+            const demos = [
+              {
+                status: "pending",
+                customer: {
+                  name: "John Muchiri",
+                  phone: "+254 712 345 678",
+                  email: "john@demo.co.ke",
+                  address: "Milimani Estate",
+                  county: "Kisumu",
+                  city: "Kisumu Central",
+                },
+              },
+              {
+                status: "processing",
+                customer: {
+                  name: "Anne Wanjiku",
+                  phone: "+254 722 456 789",
+                  email: "anne@demo.co.ke",
+                  address: "Westlands",
+                  county: "Nairobi",
+                  city: "Westlands",
+                },
+              },
+              {
+                status: "shipped",
+                customer: {
+                  name: "David Kiptoo",
+                  phone: "+254 798 321 654",
+                  email: "david@demo.co.ke",
+                  address: "Kapsoya",
+                  county: "Uasin Gishu",
+                  city: "Eldoret",
+                },
+              },
+              {
+                status: "delivered",
+                customer: {
+                  name: "Grace Njoki",
+                  phone: "+254 701 789 012",
+                  email: "grace@demo.co.ke",
+                  address: "Lanet",
+                  county: "Nakuru",
+                  city: "Nakuru Town",
+                },
+              },
+              {
+                status: "pending",
+                customer: {
+                  name: "Peter Odhiambo",
+                  phone: "+254 733 123 456",
+                  email: "peter@demo.co.ke",
+                  address: "Milimani",
+                  county: "Kisumu",
+                  city: "Kisumu Central",
+                },
+              },
+            ];
+            demos.forEach((d, i) => {
+              const pick = products.slice(i * 2, i * 2 + 3);
+              const items = pick.map((p) => ({
+                productId: p.id,
+                name: p.name,
+                sku: p.sku,
+                price: p.price,
+                qty: 1 + (i % 3),
+                subtotal: p.price * (1 + (i % 3)),
+              }));
+              const subtotal = items.reduce((a, r) => a + r.subtotal, 0);
+              DataStore.createOrder({
+                ...d,
+                items,
+                subtotal,
+                delivery: 800,
+                tax: 0,
+                total: subtotal + 800,
+                payment: ["mpesa", "bank", "card", "quote"][i % 4],
+              });
+            });
+          })();
+    
+          function render() {
+            const orders = DataStore.getOrders();
+            const counts = {
+              all: orders.length,
+              pending: orders.filter((o) => o.status === "pending").length,
+              processing: orders.filter((o) => o.status === "processing").length,
+              shipped: orders.filter((o) => o.status === "shipped").length,
+              delivered: orders.filter((o) => o.status === "delivered").length,
+            };
+            const revenue = orders
+              .filter((o) => o.status !== "cancelled")
+              .reduce((a, o) => a + (o.total || 0), 0);
+    
+            const filtered = orders.filter((o) => {
+              if (state.statusFilter !== "all" && o.status !== state.statusFilter)
+                return false;
+              if (state.q) {
+                const q = state.q.toLowerCase();
+                if (
+                  !(
+                    o.id +
+                    " " +
+                    (o.customer?.name || "") +
+                    " " +
+                    (o.customer?.phone || "")
+                  )
+                    .toLowerCase()
+                    .includes(q)
+                )
+                  return false;
+              }
+              return true;
+            });
+    
+            document.getElementById("m-content").innerHTML = `
+            <!-- Stats -->
+            <div class="m-order-statbar">
+              ${[
+                ["all", "Total Orders", counts.all, fmtKSh(revenue) + " revenue"],
+                ["pending", "Pending", counts.pending, "Awaiting confirmation"],
+                ["processing", "Processing", counts.processing, "In preparation"],
+                ["shipped", "Shipped", counts.shipped, "On the way"],
+                ["delivered", "Delivered", counts.delivered, "Completed"],
+              ]
+                .map(
+                  ([s, label, v, sub]) => `
+                <div class="m-order-stat ${state.statusFilter === s ? "is-active" : ""}" onclick="setFilter('${s}')">
+                  <div class="m-order-stat__label">${label}</div>
+                  <div class="m-order-stat__value">${v}</div>
+                  <div class="m-order-stat__sub">${sub}</div>
+                </div>`,
+                )
+                .join("")}
+            </div>
+    
+            <div class="m-panel">
+              <div class="m-list-head">
+                <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;flex-grow:1">Order List</h2>
+                <div class="m-list-search" style="position:relative;max-width:320px;flex-grow:1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--ink-500)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="search" placeholder="Search by order ID, customer name, phone…"
+                         value="${escapeHtml(state.q)}"
+                         oninput="state.q=this.value; render()"
+                         style="width:100%;height:40px;padding:0 14px 0 36px;border:1px solid var(--ink-200);border-radius:var(--r-md);font-size:13.5px;font-family:inherit">
+                </div>
+              </div>
+    
+              ${
+                filtered.length === 0
+                  ? `
+                <div class="m-order-empty">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+                  <b>No orders yet</b>
+                  <span>Orders will appear here once customers place them.</span>
+                </div>
+              `
+                  : `
+                <table class="m-order-table">
+                  <thead>
+                    <tr>
+                      <th>Order</th>
+                      <th>Customer</th>
+                      <th>Items</th>
+                      <th>Total</th>
+                      <th>Payment</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filtered
+                      .map((o) => {
+                        const itemImgs = o.items
+                          .slice(0, 3)
+                          .map((i) => {
+                            const p = DataStore.getProduct(i.productId);
+                            return p
+                              ? `<img src="${p.image}" alt="" onerror="this.src='${FALLBACK_IMG}'">`
+                              : "";
+                          })
+                          .join("");
+                        const more =
+                          o.items.length > 3
+                            ? `<span>+${o.items.length - 3} more</span>`
+                            : "";
+                        const date = new Date(o.createdAt).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "short", day: "numeric" },
+                        );
+                        const payLabel =
+                          {
+                            mpesa: "M-PESA",
+                            bank: "Bank",
+                            card: "Card",
+                            quote: "Quote",
+                          }[o.payment] || o.payment;
+                        return `
+                        <tr style="cursor:pointer" onclick="openDrawer('${o.id}')">
+                          <td><b style="color:var(--ink-900);font-weight:600">${o.id}</b></td>
+                          <td>
+                            <div class="m-order-customer">
+                              <b>${o.customer?.name || "—"}</b>
+                              <span>${o.customer?.phone || ""}</span>
+                            </div>
+                          </td>
+                          <td><div class="m-order-items">${itemImgs}${more}</div></td>
+                          <td><b style="color:var(--ink-900);font-weight:700">${fmtKSh(o.total)}</b></td>
+                          <td style="color:var(--ink-700);font-size:13px">${payLabel}</td>
+                          <td onclick="event.stopPropagation()">
+                            <select class="m-order-status-sel s-${o.status}" onchange="changeStatus('${o.id}', this.value, this)">
+                              ${[
+                                "pending",
+                                "processing",
+                                "shipped",
+                                "delivered",
+                                "cancelled",
+                              ]
+                                .map(
+                                  (s) =>
+                                    `<option value="${s}" ${o.status === s ? "selected" : ""}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`,
+                                )
+                                .join("")}
+                            </select>
+                          </td>
+                          <td style="color:var(--ink-500);font-size:12.5px">${date}</td>
+                        </tr>`;
+                      })
+                      .join("")}
+                  </tbody>
+                </table>
+              `
+              }
+            </div>
+    
+            <!-- Detail drawer -->
+            <div class="m-drawer" id="drawer" onclick="closeDrawer()">
+              <div class="m-drawer__panel" id="drawer-panel" onclick="event.stopPropagation()"></div>
+            </div>
+          `;
+          }
+    
+          function escapeHtml(s) {
+            return String(s || "").replace(
+              /[&<>"']/g,
+              (m) =>
+                ({
+                  "&": "&amp;",
+                  "<": "&lt;",
+                  ">": "&gt;",
+                  '"': "&quot;",
+                  "'": "&#39;",
+                })[m],
+            );
+          }
+    
+          function setFilter(s) {
+            state.statusFilter = s;
+            render();
+          }
+    
+          function changeStatus(orderId, newStatus, selectEl) {
+            const orders = DataStore.getOrders();
+            const o = orders.find((x) => x.id === orderId);
+            if (!o) return;
+            o.status = newStatus;
+            o.updatedAt = new Date().toISOString();
+            localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+            Toast.show("Status updated to " + newStatus);
+            // Update the select's color class without full re-render
+            selectEl.className = "m-order-status-sel s-" + newStatus;
+            MerchantLayout.refreshBadges();
+          }
+    
+          function openDrawer(orderId) {
+            const o = DataStore.getOrders().find((x) => x.id === orderId);
+            if (!o) return;
+            const panel = document.getElementById("drawer-panel");
+            const date = new Date(o.createdAt).toLocaleString();
+            panel.innerHTML = `
+            <div class="m-drawer__head">
+              <h2>${o.id}</h2>
+              <button class="m-drawer__close" onclick="closeDrawer()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+    
+            <div class="m-drawer__section">
+              <b>Customer</b>
+              <div class="m-drawer__kv">
+                <span>Name</span><span>${o.customer?.name || "—"}</span>
+                <span>Phone</span><span>${o.customer?.phone || "—"}</span>
+                <span>Email</span><span>${o.customer?.email || "—"}</span>
+              </div>
+            </div>
+    
+            <div class="m-drawer__section">
+              <b>Delivery</b>
+              <div class="m-drawer__kv">
+                <span>Address</span><span>${o.customer?.address || "—"}</span>
+                <span>City</span><span>${o.customer?.city || "—"}, ${o.customer?.county || "—"}</span>
+                <span>Notes</span><span>${o.customer?.notes || "—"}</span>
+              </div>
+            </div>
+    
+            <div class="m-drawer__section">
+              <b>Items (${o.items.length})</b>
+              <div class="m-drawer__items">
+                ${o.items
+                  .map((i) => {
+                    const p = DataStore.getProduct(i.productId);
+                    return `
+                    <div class="m-drawer__item">
+                      <img src="${p?.image || FALLBACK_IMG}" alt="" onerror="this.src='${FALLBACK_IMG}'">
+                      <div style="flex-grow:1">
+                        <b>${i.name}</b>
+                        <span>${i.sku || ""} · Qty ${i.qty} × ${fmtKSh(i.price)}</span>
+                      </div>
+                      <div style="align-self:center;font-weight:700">${fmtKSh(i.subtotal)}</div>
+                    </div>`;
+                  })
+                  .join("")}
+              </div>
+            </div>
+    
+            <div class="m-drawer__totals">
+              <div><span>Subtotal</span><span>${fmtKSh(o.subtotal)}</span></div>
+              <div><span>Delivery</span><span>${fmtKSh(o.delivery)}</span></div>
+              <div><span>Tax</span><span>${fmtKSh(o.tax)}</span></div>
+              <div class="total"><span>Total</span><span>${fmtKSh(o.total)}</span></div>
+            </div>
+    
+            <div class="m-drawer__section">
+              <b>Order info</b>
+              <div class="m-drawer__kv">
+                <span>Payment</span><span>${{ mpesa: "M-PESA", bank: "Bank Transfer", card: "Card", quote: "Pay After Quotation" }[o.payment] || o.payment}</span>
+                <span>Status</span><span style="text-transform:capitalize">${o.status}</span>
+                <span>Placed</span><span>${date}</span>
+              </div>
+            </div>
+    
+            <div style="display:flex;gap:10px;margin-top:auto">
+              <button class="btn btn--secondary" onclick="window.print()" style="flex-grow:1">Print invoice</button>
+              <button class="btn btn--primary" onclick="Toast.show('Contacting customer…')" style="flex-grow:1">Contact Customer</button>
+            </div>
+          `;
+            document.getElementById("drawer").classList.add("is-open");
+          }
+          function closeDrawer() {
+            document.getElementById("drawer").classList.remove("is-open");
+          }
+    
+          render();
+  })();
+</script>
+  </body>
+</html>

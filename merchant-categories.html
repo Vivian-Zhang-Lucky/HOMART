@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Categories · HOMART Merchant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/merchant.css" />
+
+    <style>
+      .m-cat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+      }
+      .m-cat-card {
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 20px;
+      }
+      .m-cat-card__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .m-cat-card__icon {
+        font-size: 28px;
+        line-height: 1;
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: var(--green-50);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .m-cat-card h3 {
+        font-family: var(--font-display);
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--ink-900);
+        margin-top: 10px;
+      }
+      .m-cat-card p {
+        font-size: 12.5px;
+        color: var(--ink-500);
+        margin-bottom: 12px;
+      }
+      .m-cat-subs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 12px 0;
+        border-top: 1px solid var(--ink-100);
+        margin-top: 12px;
+      }
+      .m-cat-sub {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: var(--ink-50);
+        border-radius: 12px;
+        font-size: 12px;
+        color: var(--ink-700);
+      }
+      .m-cat-sub button {
+        background: none;
+        color: var(--ink-500);
+        padding: 0;
+        cursor: pointer;
+      }
+      .m-cat-sub button:hover {
+        color: #ef4444;
+      }
+      .m-cat-sub button svg {
+        width: 10px;
+        height: 10px;
+      }
+      .m-cat-add-sub {
+        padding: 4px 10px;
+        background: transparent;
+        border: 1px dashed var(--ink-300, var(--ink-400));
+        border-radius: 12px;
+        color: var(--green-700);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .m-cat-card__foot {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 10px;
+        margin-top: 10px;
+        border-top: 1px solid var(--ink-100);
+        font-size: 12.5px;
+        color: var(--ink-500);
+      }
+      .m-cat-card__foot div b {
+        color: var(--ink-900);
+        font-weight: 700;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/merchant-layout.js"></script>
+    <script>
+  (async () => {
+    if (!await MerchantLayout.render({ active: "categories", title: "Categories" }))
+            return;
+    
+          function render() {
+            const cats = DataStore.getCategories();
+            const products = DataStore.getProducts({ includeDrafts: true });
+            document.getElementById("m-content").innerHTML = `
+            <div class="m-intro" style="background:white;border:1px solid var(--ink-200);border-radius:var(--r-lg);padding:18px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+              <div>
+                <b style="display:block;font-size:15px;color:var(--ink-900);margin-bottom:2px">Manage product categories and subcategories.</b>
+                <span style="font-size:13px;color:var(--ink-500)">Organize your catalog so customers can browse easily.</span>
+              </div>
+              <button class="btn btn--primary" onclick="addCategory()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Category
+              </button>
+            </div>
+    
+            <div class="m-cat-grid">
+              ${cats
+                .map((c) => {
+                  const count = products.filter((p) => p.category === c.id).length;
+                  return `
+                  <div class="m-cat-card">
+                    <div class="m-cat-card__head">
+                      <div class="m-cat-card__icon">${c.icon || "📦"}</div>
+                      <div class="m-row-actions">
+                        <button class="m-btn-icon" onclick="renameCategory('${c.id}')" aria-label="Rename">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button class="m-btn-icon m-btn-icon--del" onclick="deleteCategory('${c.id}')" aria-label="Delete">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <h3>${c.name}</h3>
+                    <p>${c.subcategories?.length || 0} subcategories · ${count} products</p>
+    
+                    <div class="m-cat-subs">
+                      ${(c.subcategories || [])
+                        .map(
+                          (s) => `
+                        <span class="m-cat-sub">
+                          ${s.name}
+                          <button onclick="deleteSub('${c.id}','${s.id}')" aria-label="Remove">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          </button>
+                        </span>`,
+                        )
+                        .join("")}
+                      <button class="m-cat-add-sub" onclick="addSub('${c.id}')">+ Add subcategory</button>
+                    </div>
+                    <div class="m-cat-card__foot">
+                      <div><b>${count}</b> products</div>
+                      <a href="merchant-products.html?cat=${c.id}" style="color:var(--green-700);font-weight:600">View →</a>
+                    </div>
+                  </div>`;
+                })
+                .join("")}
+            </div>
+          `;
+          }
+    
+          /* Category CRUD writes to localStorage via the STORAGE_KEYS.CATEGORIES key */
+          function saveCategories(list) {
+            localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(list));
+          }
+    
+          function addCategory() {
+            const name = prompt("Category name:");
+            if (!name) return;
+            const id = name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "");
+            const icon = prompt("Emoji icon (e.g. 🔨):") || "📦";
+            const list = DataStore.getCategories();
+            if (list.some((c) => c.id === id)) {
+              Toast.show("Category already exists", "error");
+              return;
+            }
+            list.push({ id, name, icon, subcategories: [] });
+            saveCategories(list);
+            Toast.show("Category added");
+            render();
+          }
+          function renameCategory(id) {
+            const list = DataStore.getCategories();
+            const c = list.find((x) => x.id === id);
+            if (!c) return;
+            const name = prompt("New name:", c.name);
+            if (!name) return;
+            c.name = name;
+            saveCategories(list);
+            Toast.show("Category renamed");
+            render();
+          }
+          function deleteCategory(id) {
+            const count = DataStore.getProducts({ includeDrafts: true }).filter(
+              (p) => p.category === id,
+            ).length;
+            if (count > 0) {
+              if (
+                !confirm(
+                  `This category has ${count} products. Deleting it will leave those products uncategorized. Continue?`,
+                )
+              )
+                return;
+            } else if (!confirm("Delete this category?")) return;
+            const list = DataStore.getCategories().filter((c) => c.id !== id);
+            saveCategories(list);
+            Toast.show("Category deleted");
+            render();
+          }
+          function addSub(catId) {
+            const name = prompt("Subcategory name:");
+            if (!name) return;
+            const id = name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "");
+            const list = DataStore.getCategories();
+            const c = list.find((x) => x.id === catId);
+            if (!c) return;
+            c.subcategories = c.subcategories || [];
+            if (c.subcategories.some((s) => s.id === id)) {
+              Toast.show("Already exists", "error");
+              return;
+            }
+            c.subcategories.push({ id, name });
+            saveCategories(list);
+            Toast.show("Subcategory added");
+            render();
+          }
+          function deleteSub(catId, subId) {
+            if (!confirm("Remove this subcategory?")) return;
+            const list = DataStore.getCategories();
+            const c = list.find((x) => x.id === catId);
+            if (!c) return;
+            c.subcategories = c.subcategories.filter((s) => s.id !== subId);
+            saveCategories(list);
+            Toast.show("Subcategory removed");
+            render();
+          }
+    
+          render();
+  })();
+</script>
+  </body>
+</html>

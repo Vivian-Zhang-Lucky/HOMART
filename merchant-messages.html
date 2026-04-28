@@ -1,0 +1,1677 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Messages · HOMART Merchant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/merchant.css" />
+
+    <style>
+      /* Page-specific: 3-col messages layout */
+      .m-msg-layout {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr) 300px;
+        gap: 16px;
+        height: calc(100vh - 180px);
+        min-height: 600px;
+      }
+
+      /* Inbox list */
+      .m-inbox {
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .m-inbox__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--ink-100);
+      }
+      .m-inbox__head h3 {
+        font-family: var(--font-display);
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .m-inbox__head button {
+        background: transparent;
+        padding: 6px;
+        border-radius: 6px;
+        color: var(--ink-500);
+        cursor: pointer;
+      }
+      .m-inbox__head button:hover {
+        background: var(--ink-50);
+        color: var(--ink-900);
+      }
+      .m-inbox__head button svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .m-inbox__tabs {
+        display: flex;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--ink-100);
+        gap: 20px;
+      }
+      .m-inbox__tab {
+        padding: 12px 2px;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--ink-500);
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+      }
+      .m-inbox__tab:hover {
+        color: var(--ink-900);
+      }
+      .m-inbox__tab.is-active {
+        color: var(--ink-900);
+        font-weight: 700;
+        border-bottom-color: var(--green-700);
+      }
+
+      .m-inbox__list {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 4px 6px;
+      }
+      .m-conv {
+        display: flex;
+        gap: 12px;
+        padding: 14px 12px;
+        border-radius: var(--r-md);
+        cursor: pointer;
+        margin-bottom: 2px;
+        border: 1px solid transparent;
+        transition: all 0.12s;
+      }
+      .m-conv:hover {
+        background: var(--ink-50);
+      }
+      .m-conv.is-active {
+        background: var(--green-50);
+        border-color: var(--green-100);
+      }
+      .m-conv__avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--ink-200);
+        color: var(--ink-800, var(--ink-900));
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .m-conv__body {
+        flex-grow: 1;
+        min-width: 0;
+      }
+      .m-conv__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3px;
+      }
+      .m-conv__name {
+        font-weight: 600;
+        font-size: 13.5px;
+        color: var(--ink-900);
+      }
+      .m-conv__time {
+        font-size: 11.5px;
+        color: var(--ink-500);
+        flex-shrink: 0;
+      }
+      .m-conv__preview {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        color: var(--ink-600, var(--ink-700));
+      }
+      .m-conv__msg {
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .m-conv__unread {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        flex-shrink: 0;
+      }
+      .m-inbox__foot {
+        padding: 14px 18px;
+        text-align: center;
+        border-top: 1px solid var(--ink-100);
+      }
+      .m-inbox__foot button {
+        background: transparent;
+        color: var(--ink-700);
+        font-size: 13px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+      }
+      .m-inbox__foot button:hover {
+        color: var(--green-700);
+      }
+      .m-inbox__foot svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* Thread */
+      .m-thread {
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .m-thread__empty {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+        color: var(--ink-500);
+      }
+      .m-thread__empty svg {
+        width: 56px;
+        height: 56px;
+        color: var(--ink-300, var(--ink-400));
+        margin-bottom: 14px;
+      }
+      .m-thread__empty b {
+        display: block;
+        font-size: 17px;
+        color: var(--ink-900);
+        margin-bottom: 6px;
+      }
+
+      .m-thread__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--ink-100);
+      }
+      .m-thread__contact {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .m-thread__avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--ink-200);
+        color: var(--ink-800, var(--ink-900));
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .m-thread__name {
+        font-weight: 600;
+        font-size: 14.5px;
+        color: var(--ink-900);
+      }
+      .m-thread__status {
+        font-size: 12px;
+        color: var(--stock-fg, #166534);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .m-thread__status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #22c55e;
+        display: inline-block;
+      }
+      .m-thread__more {
+        background: transparent;
+        color: var(--ink-500);
+        padding: 6px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .m-thread__more:hover {
+        background: var(--ink-50);
+        color: var(--ink-900);
+      }
+      .m-thread__more svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .m-thread__body {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: var(--ink-50);
+      }
+      .m-date-sep {
+        text-align: center;
+        font-size: 12px;
+        color: var(--ink-500);
+        margin: 12px 0 4px;
+      }
+      .m-date-sep span {
+        background: white;
+        padding: 3px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--ink-100);
+      }
+      .m-bubble {
+        max-width: 70%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13.5px;
+        line-height: 1.5;
+        position: relative;
+      }
+      .m-bubble time {
+        font-size: 11px;
+        color: var(--ink-500);
+        margin-left: 8px;
+      }
+      .m-bubble__check {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 4px;
+        color: var(--green-700);
+      }
+      .m-bubble__check svg {
+        width: 13px;
+        height: 13px;
+      }
+      .m-bubble--customer {
+        align-self: flex-start;
+        background: white;
+        border: 1px solid var(--ink-100);
+        color: var(--ink-900);
+        border-top-left-radius: 4px;
+      }
+      .m-bubble--merchant {
+        align-self: flex-end;
+        background: var(--green-50);
+        color: var(--ink-900);
+        border-top-right-radius: 4px;
+      }
+
+      /* Product card bubble */
+      .m-bubble--product {
+        align-self: flex-end;
+        max-width: 380px;
+        width: 100%;
+        background: white;
+        border: 1.5px solid var(--green-700);
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+      }
+      .m-bubble--product img {
+        width: 56px;
+        height: 56px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: var(--ink-50);
+        flex-shrink: 0;
+      }
+      .m-bubble--product__body {
+        flex-grow: 1;
+        min-width: 0;
+      }
+      .m-bubble--product__name {
+        font-weight: 700;
+        font-size: 13.5px;
+        color: var(--ink-900);
+      }
+      .m-bubble--product__sub {
+        font-size: 12px;
+        color: var(--ink-500);
+        margin: 2px 0 4px;
+      }
+      .m-bubble--product__price {
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--ink-900);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .m-bubble--product svg.chev {
+        width: 16px;
+        height: 16px;
+        color: var(--ink-500);
+        flex-shrink: 0;
+      }
+
+      /* Quotation summary bubble */
+      .m-bubble--quote {
+        align-self: flex-start;
+        max-width: 420px;
+        width: 100%;
+        background: var(--green-50);
+        border: 1px solid var(--green-100);
+        padding: 14px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        border-radius: 12px;
+      }
+      .m-bubble--quote__icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: white;
+        color: var(--green-700);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .m-bubble--quote__icon svg {
+        width: 18px;
+        height: 18px;
+      }
+      .m-bubble--quote__body {
+        flex-grow: 1;
+        min-width: 0;
+      }
+      .m-bubble--quote__title {
+        font-size: 12.5px;
+        color: var(--ink-500);
+        margin-bottom: 2px;
+      }
+      .m-bubble--quote__line {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ink-900);
+      }
+      .m-bubble--quote button {
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: 6px;
+        color: var(--ink-900);
+        cursor: pointer;
+      }
+      .m-bubble--quote button:hover {
+        border-color: var(--green-700);
+        color: var(--green-700);
+      }
+
+      /* Compose */
+      .m-compose {
+        padding: 14px 20px;
+        border-top: 1px solid var(--ink-100);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .m-compose textarea {
+        width: 100%;
+        min-height: 60px;
+        max-height: 200px;
+        padding: 12px 14px;
+        resize: none;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-md);
+        font-family: inherit;
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--ink-900);
+      }
+      .m-compose textarea:focus {
+        outline: 0;
+        border-color: var(--green-700);
+        box-shadow: 0 0 0 3px rgba(30, 74, 52, 0.12);
+      }
+      .m-compose__foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .m-compose__tools {
+        display: flex;
+        gap: 4px;
+      }
+      .m-compose__tools button {
+        width: 34px;
+        height: 34px;
+        background: transparent;
+        color: var(--ink-500);
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .m-compose__tools button:hover {
+        background: var(--ink-50);
+        color: var(--ink-900);
+      }
+      .m-compose__tools svg {
+        width: 18px;
+        height: 18px;
+      }
+      .m-send-btn {
+        background: var(--green-700);
+        color: white;
+        padding: 9px 22px;
+        border-radius: 6px;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .m-send-btn:hover {
+        background: var(--green-800);
+      }
+      .m-send-btn:disabled {
+        background: var(--ink-300, var(--ink-400));
+        cursor: not-allowed;
+      }
+
+      /* Right column: customer details */
+      .m-cust {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        overflow-y: auto;
+      }
+      .m-cust__block {
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 18px;
+      }
+      .m-cust__block h4 {
+        font-family: var(--font-display);
+        font-size: 14.5px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        color: var(--ink-900);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .m-cust__block h4 a {
+        font-size: 12px;
+        color: var(--green-700);
+        font-weight: 600;
+      }
+      .m-cust__profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .m-cust__avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--ink-200);
+        color: var(--ink-800, var(--ink-900));
+        font-size: 15px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .m-cust__name {
+        font-weight: 700;
+        font-size: 14.5px;
+        color: var(--ink-900);
+      }
+      .m-cust__info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .m-cust__info-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--ink-800, var(--ink-900));
+      }
+      .m-cust__info-row svg {
+        width: 15px;
+        height: 15px;
+        color: var(--ink-500);
+        flex-shrink: 0;
+      }
+
+      .m-tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .m-tag-list .m-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 12px;
+        background: var(--green-50);
+        color: var(--green-700);
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .m-tag-add {
+        background: transparent;
+        color: var(--green-700);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 0;
+        cursor: pointer;
+      }
+
+      .m-quick-act {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .m-quick-act button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+        width: 100%;
+        border-radius: var(--r-md);
+        font-size: 13px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .m-quick-act button svg {
+        width: 15px;
+        height: 15px;
+      }
+      .m-quick-act .is-primary {
+        background: var(--green-700);
+        color: white;
+        border: 0;
+      }
+      .m-quick-act .is-primary:hover {
+        background: var(--green-800);
+      }
+      .m-quick-act .is-secondary {
+        background: white;
+        color: var(--ink-900);
+        border: 1px solid var(--ink-200);
+      }
+      .m-quick-act .is-secondary:hover {
+        border-color: var(--green-700);
+        color: var(--green-700);
+      }
+
+      .m-rel-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .m-rel {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px;
+        border-radius: var(--r-md);
+        cursor: pointer;
+      }
+      .m-rel:hover {
+        background: var(--ink-50);
+      }
+      .m-rel img {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: var(--ink-50);
+        flex-shrink: 0;
+      }
+      .m-rel__body {
+        flex-grow: 1;
+        min-width: 0;
+      }
+      .m-rel__name {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ink-900);
+      }
+      .m-rel__sub {
+        font-size: 11px;
+        color: var(--ink-500);
+      }
+      .m-rel__price {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ink-900);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 3px;
+      }
+
+      @media (max-width: 1200px) {
+        .m-msg-layout {
+          grid-template-columns: 280px minmax(0, 1fr);
+        }
+        .m-cust {
+          display: none;
+        }
+      }
+      @media (max-width: 800px) {
+        .m-msg-layout {
+          grid-template-columns: 1fr;
+          height: auto;
+          min-height: 0;
+        }
+        .m-inbox {
+          max-height: 360px;
+        }
+        .m-thread {
+          min-height: 500px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/supabase-chat.js"></script>
+    <script src="js/merchant-layout.js"></script>
+    <script>
+  (async () => {
+      if (
+        !await MerchantLayout.render({
+          active: "messages",
+          title: "Customer Messages",
+        })
+      )
+        return;
+
+      /* ============================================================
+       Messages page — reads from DataStore in real-time
+       ============================================================ */
+
+      const PLACEHOLDER_CONVERSATIONS = [
+        {
+          id: "c_john",
+          name: "John Muchiri",
+          phone: "+254 712 345 678",
+          location: "Kisumu, Kenya",
+          role: "Contractor",
+          tags: ["Frequent Buyer", "Plumbing Projects"],
+          online: true,
+          messages: [
+            {
+              sender: "customer",
+              at: "10:18",
+              text: "Hi, do you have 4-inch PVC pipes in stock?",
+            },
+            {
+              sender: "customer",
+              at: "10:18",
+              text: "I need about 60 pieces for a project in Kisumu.",
+            },
+            {
+              sender: "seller",
+              at: "10:19",
+              text: 'Hello John, yes we do have uPVC Pipe 110mm (4") in stock.',
+            },
+            {
+              sender: "seller",
+              at: "10:19",
+              text: "The current stock is 65 pieces.",
+            },
+            {
+              sender: "customer",
+              at: "10:20",
+              text: "Great! What's the price per piece for 60 pieces?",
+            },
+            {
+              sender: "seller",
+              at: "10:21",
+              text: "For 60 pieces, we can offer KSh 1,450 per piece.",
+            },
+            {
+              sender: "seller",
+              at: "10:21",
+              type: "quote",
+              text: 'uPVC Pipe 110mm (4") — KSh 1,450 each',
+            },
+            {
+              sender: "customer",
+              at: "10:22",
+              text: "That works for me. How soon can you deliver to Kisumu?",
+            },
+            {
+              sender: "seller",
+              at: "10:23",
+              text: "We can deliver within 2 business days via our logistics partner.",
+            },
+            {
+              sender: "seller",
+              at: "10:23",
+              type: "product",
+              productId: "p001",
+            },
+            {
+              sender: "customer",
+              at: "10:24",
+              text: "Perfect, please send me the payment details.",
+            },
+          ],
+          preview: 'Do you have 4" PVC pipes in stock...',
+          previewTime: "10:24 AM",
+          unread: true,
+          status: "quotation",
+        },
+        {
+          id: "c_anne",
+          name: "Anne Wanjiku",
+          phone: "+254 722 456 789",
+          location: "Nairobi, Kenya",
+          role: "Retailer",
+          tags: ["Wholesale"],
+          online: true,
+          messages: [
+            {
+              sender: "customer",
+              at: "9:48",
+              text: "Kindly share bulk prices for basin taps.",
+            },
+          ],
+          preview: "Kindly share bulk prices for basin taps...",
+          previewTime: "9:48 AM",
+          unread: true,
+          status: "quotation",
+        },
+        {
+          id: "c_peter",
+          name: "Peter Odhiambo",
+          phone: "+254 733 123 456",
+          location: "Kisumu, Kenya",
+          role: "Builder",
+          tags: ["Delivery Queries"],
+          online: false,
+          messages: [
+            {
+              sender: "customer",
+              at: "Yesterday",
+              text: "What's the delivery time to Kisumu?",
+            },
+          ],
+          preview: "What's the delivery time to Kisumu?",
+          previewTime: "Yesterday",
+          unread: true,
+          status: "all",
+        },
+        {
+          id: "c_grace",
+          name: "Grace Njoki",
+          phone: "+254 701 789 012",
+          location: "Nakuru, Kenya",
+          role: "Homeowner",
+          tags: ["Support"],
+          online: false,
+          messages: [
+            {
+              sender: "customer",
+              at: "Yesterday",
+              text: "Need help with product installation.",
+            },
+          ],
+          preview: "Need help with product installation.",
+          previewTime: "Yesterday",
+          unread: true,
+          status: "all",
+        },
+        {
+          id: "c_david",
+          name: "David Kiptoo",
+          phone: "+254 798 321 654",
+          location: "Eldoret, Kenya",
+          role: "Contractor",
+          tags: ["Bathroom Fixtures"],
+          online: false,
+          messages: [
+            {
+              sender: "customer",
+              at: "2 days ago",
+              text: "Requesting quote for bathroom fittings.",
+            },
+          ],
+          preview: "Requesting quote for bathroom fittings.",
+          previewTime: "2 days ago",
+          unread: false,
+          status: "quotation",
+        },
+        {
+          id: "c_mercy",
+          name: "Mercy Akinyi",
+          phone: "+254 715 987 654",
+          location: "Mombasa, Kenya",
+          role: "Hardware Store Owner",
+          tags: ["Wholesale", "Valves"],
+          online: false,
+          messages: [
+            {
+              sender: "customer",
+              at: "2 days ago",
+              text: "Do you supply valves in bulk?",
+            },
+          ],
+          preview: "Do you supply valves in bulk?",
+          previewTime: "2 days ago",
+          unread: false,
+          status: "quotation",
+        },
+        {
+          id: "c_brian",
+          name: "Brian Mwangi",
+          phone: "+254 720 111 222",
+          location: "Nairobi, Kenya",
+          role: "Plumber",
+          tags: ["Fittings"],
+          online: false,
+          messages: [
+            {
+              sender: "customer",
+              at: "3 days ago",
+              text: "Looking for pipe fittings and accessories.",
+            },
+          ],
+          preview: "Looking for pipe fittings and accessories.",
+          previewTime: "3 days ago",
+          unread: false,
+          status: "resolved",
+        },
+      ];
+
+      /* ---------- State ---------- */
+      const state = {
+        tab: "all",
+        activeId: URLParams.get("c") || null,
+        conversations: [],
+        useSb: false,
+      };
+
+      /* ---------- Load conversations from DataStore ---------- */
+      function loadConversations() {
+        const storedConvs = DataStore.getConversations();
+        const allMsgs = DataStore.getMessages();
+
+        if (storedConvs.length === 0) {
+          // No real conversations yet — show placeholder data so the page isn't empty
+          state.conversations = PLACEHOLDER_CONVERSATIONS;
+          if (!state.activeId) state.activeId = state.conversations[0]?.id || null;
+          return;
+        }
+
+        state.conversations = storedConvs.map((conv) => {
+          const msgs = allMsgs.filter((m) => m.conversationId === conv.id);
+          return {
+            ...conv,
+            // bridge fields used by renderBubble / renderCust
+            name: conv.customerName,
+            phone: conv.customerPhone || "",
+            location: conv.customerLocation || "",
+            role: conv.customerRole || "",
+            tags: conv.tags || [],
+            online: false,
+            unread: (conv.unreadByMerchant || 0) > 0,
+            preview: conv.lastMessage || "",
+            previewTime: conv.lastTimestamp ? fmtRelTime(conv.lastTimestamp) : "",
+            messages: msgs,
+          };
+        });
+
+        // reset activeId if it pointed to placeholder data or an id that no longer exists
+        const realIds = state.conversations.map((c) => c.id);
+        if (!state.activeId || !realIds.includes(state.activeId)) {
+          state.activeId = state.conversations[0]?.id || null;
+          _threadConvId = null; // force full thread rebuild
+        }
+      }
+
+      async function loadFromSupabase() {
+        const rows = await SupabaseChat.listMerchantConversations();
+        const mapped = await Promise.all(
+          rows.map(async (cv) => {
+            const msgsRaw = await SupabaseChat.listMessages(cv.id);
+            return {
+              id: cv.id,
+              customerId: cv.customer_id,
+              name: cv.customer_name || "Customer",
+              phone: "",
+              location: "",
+              role: "",
+              tags: [],
+              online: false,
+              unread: (cv.unread_merchant || 0) > 0,
+              preview: cv.last_message || "",
+              previewTime: cv.last_at ? fmtRelTime(cv.last_at) : "",
+              messages: msgsRaw,
+              status: cv.status || "open",
+            };
+          }),
+        );
+        state.conversations = mapped;
+        const realIds = state.conversations.map((c) => c.id);
+        if (!state.activeId || !realIds.includes(state.activeId)) {
+          state.activeId = state.conversations[0]?.id || null;
+          _threadConvId = null;
+        }
+      }
+
+      function fmtRelTime(iso) {
+        const d = new Date(iso);
+        const now = new Date();
+        const diffMs = now - d;
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return "just now";
+        if (diffMin < 60) return diffMin + "m ago";
+        const diffH = Math.floor(diffMin / 60);
+        if (diffH < 24) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        if (diffH < 48) return "Yesterday";
+        return d.toLocaleDateString([], { month: "short", day: "numeric" });
+      }
+
+      function isPlaceholder() {
+        if (state.useSb) return false;
+        return state.conversations.length > 0 && state.conversations[0].id === "c_john";
+      }
+
+      /* ---------- Layout ---------- */
+      document.getElementById("m-content").innerHTML = `
+      <div class="m-msg-layout">
+        <!-- Inbox -->
+        <div class="m-inbox">
+          <div class="m-inbox__head">
+            <h3>Inbox</h3>
+            <button title="Filter">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            </button>
+          </div>
+          <div class="m-inbox__tabs" id="inbox-tabs"></div>
+          <div class="m-inbox__list" id="conv-list"></div>
+          <div class="m-inbox__foot">
+            <button onclick="Toast.show('No more conversations to load')">
+              Load more conversations
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Thread -->
+        <div class="m-thread" id="thread"></div>
+
+        <!-- Customer details -->
+        <div class="m-cust" id="cust-col"></div>
+      </div>
+    `;
+
+      function escapeHtml(s) {
+        return String(s || "").replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[m],
+        );
+      }
+      function initials(name) {
+        return name
+          .split(" ")
+          .map((s) => s[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase();
+      }
+
+      /* ---------- Inbox tabs ---------- */
+      function renderTabs() {
+        const unread = state.conversations.filter((c) => c.unread).length;
+        const tabs = [
+          { id: "all", label: "All" },
+          { id: "unread", label: `Unread${unread ? ` (${unread})` : ""}` },
+          { id: "quotation", label: "Quotation" },
+          { id: "resolved", label: "Resolved" },
+        ];
+        document.getElementById("inbox-tabs").innerHTML = tabs
+          .map(
+            (t) => `
+        <div class="m-inbox__tab ${state.tab === t.id ? "is-active" : ""}" onclick="setTab('${t.id}')">${t.label}</div>
+      `,
+          )
+          .join("");
+      }
+      function setTab(t) {
+        state.tab = t;
+        renderTabs();
+        renderList();
+      }
+
+      /* ---------- Conversation list ---------- */
+      function filteredConvs() {
+        return state.conversations.filter((c) => {
+          if (state.tab === "unread") return c.unread;
+          if (state.tab === "quotation") return c.status === "quotation";
+          if (state.tab === "resolved") return c.status === "resolved";
+          return true;
+        });
+      }
+      function renderList() {
+        const list = filteredConvs();
+        document.getElementById("conv-list").innerHTML =
+          list
+            .map(
+              (c) => `
+        <div class="m-conv ${state.activeId === c.id ? "is-active" : ""}" onclick="selectConv('${c.id}')">
+          <div class="m-conv__avatar">${initials(c.name)}</div>
+          <div class="m-conv__body">
+            <div class="m-conv__head">
+              <span class="m-conv__name">${c.name}</span>
+              <span class="m-conv__time">${c.previewTime}</span>
+            </div>
+            <div class="m-conv__preview">
+              <span class="m-conv__msg">${escapeHtml(c.preview)}</span>
+              ${c.unread ? '<span class="m-conv__unread"></span>' : ""}
+            </div>
+          </div>
+        </div>`,
+            )
+            .join("") ||
+          '<div style="padding:40px 20px;text-align:center;color:var(--ink-500);font-size:13px">No conversations</div>';
+      }
+
+      function selectConv(id) {
+        state.activeId = id;
+        const c = state.conversations.find((x) => x.id === id);
+        if (c) {
+          c.unread = false;
+          if (state.useSb) {
+            SupabaseChat.markMerchantRead(id)
+              .then(() => MerchantLayout.refreshBadges())
+              .catch((e) => console.error("markMerchantRead failed:", e));
+          } else if (!isPlaceholder()) {
+            DataStore.markConversationRead(id, "merchant");
+          }
+        }
+        renderList();
+        renderThread();
+        renderCust();
+        // On mobile: show thread as full-screen overlay
+        document.getElementById("thread")?.classList.add("is-open");
+      }
+
+      function closeThreadMobile() {
+        document.getElementById("thread")?.classList.remove("is-open");
+      }
+
+      /* ---------- Thread ---------- */
+      let _threadConvId = null; // track which conversation is currently rendered
+
+      function renderThread() {
+        const c = state.conversations.find((x) => x.id === state.activeId);
+        const thread = document.getElementById("thread");
+
+        if (!c) {
+          _threadConvId = null;
+          thread.innerHTML = `
+          <div class="m-thread__empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <b>Select a conversation</b>
+            <span>Choose a customer from the inbox to start replying.</span>
+          </div>`;
+          return;
+        }
+
+        // If same conversation already rendered, only refresh the message body
+        // to avoid clearing the merchant's in-progress reply text
+        if (_threadConvId === c.id) {
+          const body = document.getElementById("t-body");
+          if (body) {
+            const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
+            body.innerHTML = renderMessageList(c.messages);
+            if (atBottom) body.scrollTop = body.scrollHeight;
+          }
+          return;
+        }
+
+        // Full render (new conversation selected)
+        _threadConvId = c.id;
+        thread.innerHTML = `
+        <div class="m-thread__head">
+          <div class="m-thread__contact">
+            <button class="m-thread__back" onclick="closeThreadMobile()" aria-label="Back" style="display:none;margin-right:8px;background:none;padding:4px;color:var(--ink-700);border-radius:6px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="m-thread__avatar">${initials(c.name)}</div>
+            <div>
+              <div class="m-thread__name">${c.name}</div>
+              ${c.online ? '<span class="m-thread__status">online</span>' : '<span style="font-size:12px;color:var(--ink-500)">offline</span>'}
+            </div>
+          </div>
+          <button class="m-thread__more" aria-label="More">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          </button>
+        </div>
+        <div class="m-thread__body" id="t-body">
+          ${renderMessageList(c.messages)}
+        </div>
+        <div class="m-compose">
+          <textarea id="reply-box" placeholder="Type your message..."
+                    onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendReply()}"></textarea>
+          <div class="m-compose__foot">
+            <div class="m-compose__tools">
+              <button type="button" title="Attach file" onclick="Toast.show('File attachment coming soon')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <button type="button" title="Emoji" onclick="insertEmoji()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+              </button>
+            </div>
+            <button class="m-send-btn" onclick="sendReply()" id="send-btn">Send</button>
+          </div>
+        </div>`;
+        const body = document.getElementById("t-body");
+        body.scrollTop = body.scrollHeight;
+      }
+
+      function renderMessageList(messages) {
+        if (!messages || messages.length === 0) {
+          return '<div style="text-align:center;color:var(--ink-400);font-size:13px;padding:40px">No messages yet</div>';
+        }
+        let html = "";
+        let lastDate = "";
+        for (const m of messages) {
+          const dateLabel = m.timestamp
+            ? (() => {
+                const d = new Date(m.timestamp);
+                const today = new Date();
+                if (d.toDateString() === today.toDateString()) return "Today";
+                const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+                if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+                return d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+              })()
+            : "Today";
+          if (dateLabel !== lastDate) {
+            html += `<div class="m-date-sep"><span>${dateLabel}</span></div>`;
+            lastDate = dateLabel;
+          }
+          html += renderBubble(m);
+        }
+        return html;
+      }
+
+      function msgText(m) { return m.text || m.message || ""; }
+      function msgTime(m) {
+        if (m.at) return m.at;
+        if (m.timestamp) return new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        return "";
+      }
+
+      function renderBubble(m) {
+        if (m.type === "product") {
+          const p = DataStore.getProduct(m.productId);
+          if (!p) return "";
+          return `
+          <div class="m-bubble--product" onclick="location.href='product.html?id=${p.id}'">
+            <img src="${p.image}" alt="" onerror="this.src='${FALLBACK_IMG}'">
+            <div class="m-bubble--product__body">
+              <div class="m-bubble--product__name">${p.name}</div>
+              <div class="m-bubble--product__sub">${p.shortDesc || p.description || ""}</div>
+              <div class="m-bubble--product__price">
+                ${fmtKSh(p.price)} / piece
+                <span class="m-pill m-pill--in">In Stock</span>
+              </div>
+            </div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>`;
+        }
+        if (m.type === "quote") {
+          return `
+          <div class="m-bubble--quote">
+            <div class="m-bubble--quote__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <div class="m-bubble--quote__body">
+              <div class="m-bubble--quote__title">Quotation Summary</div>
+              <div class="m-bubble--quote__line">${escapeHtml(msgText(m))}</div>
+            </div>
+            <button onclick="Toast.show('Opening quotation…')">View Quote</button>
+          </div>`;
+        }
+        const readCheck =
+          m.sender === "seller"
+            ? `<span class="m-bubble__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>`
+            : "";
+        return `
+        <div class="m-bubble m-bubble--${m.sender === "customer" ? "customer" : "merchant"}">
+          ${escapeHtml(msgText(m)).replace(/\n/g, "<br>")}
+          <time>${msgTime(m)}${readCheck}</time>
+        </div>`;
+      }
+
+      function sendReply() {
+        const box = document.getElementById("reply-box");
+        const txt = (box.value || "").trim();
+        if (!txt) return;
+        const c = state.conversations.find((x) => x.id === state.activeId);
+        if (!c) return;
+        const store = DataStore.getSession ? {} : {};
+        const storeSettings = JSON.parse(localStorage.getItem("HOMART.storeSettings") || "null") || {};
+        const sellerName = storeSettings.name || "HOMART Sales";
+
+        if (isPlaceholder()) {
+          const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          c.messages.push({ sender: "seller", at: now, text: txt });
+          c.preview = txt.slice(0, 60);
+          c.previewTime = now;
+        } else if (state.useSb) {
+          void (async () => {
+            try {
+              await SupabaseChat.insertMessage(c.id, "seller", txt, { type: "text" });
+              c.messages = await SupabaseChat.listMessages(c.id);
+              const rows = await SupabaseChat.listMerchantConversations();
+              const row = rows.find((r) => r.id === c.id);
+              if (row) {
+                c.preview = row.last_message || "";
+                c.previewTime = row.last_at ? fmtRelTime(row.last_at) : "";
+              }
+              box.value = "";
+              renderThread();
+              renderList();
+            } catch (err) {
+              console.error(err);
+              Toast.show("Send failed", "error");
+            }
+          })();
+          return;
+        } else {
+          DataStore.addMessage({
+            conversationId: c.id,
+            sender: "seller",
+            name: sellerName,
+            message: txt,
+          });
+          const msgs = DataStore.getMessages().filter((m) => m.conversationId === c.id);
+          c.messages = msgs;
+          const convData = DataStore.getConversation(c.id);
+          if (convData) {
+            c.preview = convData.lastMessage;
+            c.previewTime = fmtRelTime(convData.lastTimestamp);
+          }
+        }
+
+        box.value = "";
+        renderThread();
+        renderList();
+      }
+
+      function insertEmoji() {
+        const box = document.getElementById("reply-box");
+        box.value += "👍 ";
+        box.focus();
+      }
+
+      /* ---------- Customer details (right column) ---------- */
+      function renderCust() {
+        const c = state.conversations.find((x) => x.id === state.activeId);
+        const el = document.getElementById("cust-col");
+        if (!c) {
+          el.innerHTML = "";
+          return;
+        }
+
+        // Related products: use any 3 products from same category area
+        const related = DataStore.getProducts({ category: "plumbing" }).slice(
+          0,
+          3,
+        );
+        if (related.length < 3) {
+          // fallback: take any
+          const all = DataStore.getProducts().slice(0, 3);
+          related.push(...all.slice(related.length, 3));
+        }
+
+        el.innerHTML = `
+        <div class="m-cust__block">
+          <h4>Customer Details</h4>
+          <div class="m-cust__profile">
+            <div class="m-cust__avatar">${initials(c.name)}</div>
+            <div>
+              <div class="m-cust__name">${c.name}</div>
+              ${c.online ? '<div class="m-thread__status">online</div>' : '<span style="font-size:12px;color:var(--ink-500)">offline</span>'}
+            </div>
+          </div>
+          <div class="m-cust__info-list">
+            <div class="m-cust__info-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              ${c.phone}
+            </div>
+            <div class="m-cust__info-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              ${c.location}
+            </div>
+            <div class="m-cust__info-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              ${c.role}
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <h4 style="margin-bottom:10px;display:block">Tags</h4>
+            <div class="m-tag-list">
+              ${c.tags.map((t) => `<span class="m-tag">${t}</span>`).join("")}
+              <button class="m-tag-add" onclick="addCustTag()">+ Add Tag</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="m-cust__block">
+          <h4>Quick Actions</h4>
+          <div class="m-quick-act">
+            <button class="is-primary" onclick="shareProduct()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              Share Product
+            </button>
+            <button class="is-secondary" onclick="sendQuote()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Send Quote
+            </button>
+            <button class="is-secondary" onclick="markResolved()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Mark Resolved
+            </button>
+          </div>
+        </div>
+
+        <div class="m-cust__block">
+          <h4>Related Products <a href="merchant-products.html">View All</a></h4>
+          <div class="m-rel-list">
+            ${related
+              .map(
+                (p) => `
+              <div class="m-rel" onclick="location.href='product.html?id=${p.id}'">
+                <img src="${p.image}" alt="" onerror="this.src='${FALLBACK_IMG}'">
+                <div class="m-rel__body">
+                  <div class="m-rel__name">${p.name}</div>
+                  <div class="m-rel__sub">${p.shortDesc || p.material || "—"}</div>
+                  <div class="m-rel__price">
+                    ${fmtKSh(p.price)}
+                    <span class="m-pill m-pill--in" style="font-size:10.5px;padding:1px 8px">In Stock</span>
+                  </div>
+                </div>
+              </div>`,
+              )
+              .join("")}
+          </div>
+        </div>
+      `;
+      }
+
+      function addCustTag() {
+        const t = prompt("Tag name:");
+        if (!t) return;
+        const c = state.conversations.find((x) => x.id === state.activeId);
+        if (c && !c.tags.includes(t.trim())) c.tags.push(t.trim());
+        renderCust();
+      }
+      function shareProduct() {
+        const pid = prompt("Product ID to share (e.g. p002):");
+        if (!pid) return;
+        const p = DataStore.getProduct(pid.trim());
+        if (!p) { Toast.show("Product not found", "error"); return; }
+        const c = state.conversations.find((x) => x.id === state.activeId);
+        if (!c) return;
+        if (isPlaceholder()) {
+          const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          c.messages.push({ sender: "seller", at: now, type: "product", productId: pid.trim() });
+          c.preview = `Shared: ${p.name}`;
+          c.previewTime = now;
+        } else if (state.useSb) {
+          void (async () => {
+            try {
+              await SupabaseChat.insertMessage(c.id, "seller", `Shared: ${p.name}`, {
+                type: "product",
+                productId: pid.trim(),
+              });
+              c.messages = await SupabaseChat.listMessages(c.id);
+              renderThread();
+              renderList();
+              Toast.show("Product shared");
+            } catch (err) {
+              console.error(err);
+              Toast.show("Share failed", "error");
+            }
+          })();
+          return;
+        } else {
+          DataStore.addMessage({ conversationId: c.id, sender: "seller", name: "HOMART Sales", type: "product", productId: pid.trim(), message: `Shared: ${p.name}` });
+          c.messages = DataStore.getMessages().filter((m) => m.conversationId === c.id);
+        }
+        renderThread();
+        renderList();
+        Toast.show("Product shared");
+      }
+      function sendQuote() {
+        const c = state.conversations.find((x) => x.id === state.activeId);
+        if (!c) return;
+        const text = prompt('Quote summary (e.g. "uPVC Pipe 110mm (4\") — KSh 1,450 each"):');
+        if (!text) return;
+        if (isPlaceholder()) {
+          const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          c.messages.push({ sender: "seller", at: now, type: "quote", text });
+          c.preview = `Quote: ${text.slice(0, 40)}`;
+          c.previewTime = now;
+          c.status = "quotation";
+        } else if (state.useSb) {
+          void (async () => {
+            try {
+              await SupabaseChat.insertMessage(c.id, "seller", text, { type: "quote" });
+              await SupabaseChat.updateConversationStatus(c.id, "quotation");
+              c.messages = await SupabaseChat.listMessages(c.id);
+              c.status = "quotation";
+              renderThread();
+              renderList();
+              Toast.show("Quote sent");
+            } catch (err) {
+              console.error(err);
+              Toast.show("Quote failed", "error");
+            }
+          })();
+          return;
+        } else {
+          DataStore.addMessage({ conversationId: c.id, sender: "seller", name: "HOMART Sales", type: "quote", message: text });
+          DataStore.updateConversation(c.id, { status: "quotation" });
+          c.messages = DataStore.getMessages().filter((m) => m.conversationId === c.id);
+          c.status = "quotation";
+        }
+        renderThread();
+        renderList();
+        Toast.show("Quote sent");
+      }
+      function markResolved() {
+        const c = state.conversations.find((x) => x.id === state.activeId);
+        if (!c) return;
+        c.status = "resolved";
+        if (state.useSb)
+          void SupabaseChat.updateConversationStatus(c.id, "resolved");
+        else if (!isPlaceholder()) DataStore.updateConversation(c.id, { status: "resolved" });
+        renderList();
+        Toast.show("Marked resolved");
+      }
+
+      /* ---------- Real-time sync ---------- */
+      // snapshot of message counts per conversation, for detecting new arrivals
+      function getMsgSnapshot() {
+        const snap = {};
+        state.conversations.forEach((c) => { snap[c.id] = (c.messages || []).length; });
+        return snap;
+      }
+
+      async function refreshFromStore() {
+        const prevSnap = getMsgSnapshot();
+        const prevActive = state.activeId;
+
+        if (state.useSb) await loadFromSupabase();
+        else loadConversations();
+        renderTabs();
+        renderList();
+        renderThread();
+
+        if (state.activeId && !isPlaceholder()) {
+          const c = state.conversations.find((x) => x.id === state.activeId);
+          if (c && c.unread) {
+            c.unread = false;
+            if (state.useSb) {
+              await SupabaseChat.markMerchantRead(state.activeId).catch((e) => console.error("markMerchantRead failed:", e));
+              MerchantLayout.refreshBadges();
+            }
+            else DataStore.markConversationRead(state.activeId, "merchant");
+          }
+        }
+
+        // toast for new messages in non-active conversations
+        state.conversations.forEach((conv) => {
+          if (conv.id === state.activeId) return;
+          const prev = prevSnap[conv.id] ?? -1;
+          const now = (conv.messages || []).length;
+          if (now > prev && prev >= 0) {
+            Toast.show(`New message from ${conv.name || "a customer"}`);
+          }
+        });
+      }
+
+      // Cross-tab sync: customer page writes localStorage → storage event fires here
+      window.addEventListener("storage", (e) => {
+        if (state.useSb) return;
+        if (e.key === STORAGE_KEYS.MESSAGES || e.key === STORAGE_KEYS.CONVERSATIONS) {
+          void refreshFromStore();
+        }
+      });
+
+      window.addEventListener("homart:messages", () => {
+        if (!state.useSb) void refreshFromStore();
+      });
+      window.addEventListener("homart:conversations", () => {
+        if (!state.useSb) void refreshFromStore();
+      });
+
+      let _pollSnap = { msgs: 0, convs: 0 };
+      const _localPollId = setInterval(() => {
+        if (state.useSb) return;
+        const msgs = DataStore.getMessages().length;
+        const convs = DataStore.getConversations().length;
+        if (msgs !== _pollSnap.msgs || convs !== _pollSnap.convs) {
+          _pollSnap = { msgs, convs };
+          void refreshFromStore();
+        }
+      }, 1500);
+
+      let _sbMerchantUnsub = null;
+      let _sbPollId = null;
+      (async function bootMessages() {
+        if (window.SupabaseChat && SupabaseChat.isReady()) {
+          state.useSb = true;
+          try {
+            await loadFromSupabase();
+            if (_sbMerchantUnsub) _sbMerchantUnsub();
+            _sbMerchantUnsub = SupabaseChat.subscribeMerchantMessages(() => {
+              void refreshFromStore();
+            });
+            /* Realtime 未配置或失败时仍定期同步云端收件箱 */
+            _sbPollId = setInterval(() => {
+              if (!state.useSb) return;
+              void refreshFromStore();
+            }, 4000);
+          } catch (err) {
+            console.error(err);
+            state.useSb = false;
+            Toast.show(
+              "Cloud inbox unavailable — showing local data. " +
+                (err && err.message ? "(" + err.message + ")" : ""),
+              "info",
+            );
+            loadConversations();
+          }
+        } else {
+          loadConversations();
+        }
+        renderTabs();
+        renderList();
+        renderThread();
+        renderCust();
+      })();
+
+      window.selectConv = selectConv;
+      window.setTab = setTab;
+      window.closeThreadMobile = closeThreadMobile;
+      window.sendReply = sendReply;
+      window.insertEmoji = insertEmoji;
+      window.addCustTag = addCustTag;
+      window.shareProduct = shareProduct;
+      window.sendQuote = sendQuote;
+      window.markResolved = markResolved;
+
+      MerchantLayout._pageCleanup = () => {
+        clearInterval(_localPollId);
+        if (_sbPollId) clearInterval(_sbPollId);
+        if (_sbMerchantUnsub) _sbMerchantUnsub();
+      };
+  })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customers · HOMART Merchant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/merchant.css" />
+    <style>
+      .m-cust-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      .m-cust-table th {
+        text-align: left;
+        padding: 14px 12px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink-500);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid var(--ink-100);
+      }
+      .m-cust-table td {
+        padding: 14px 12px;
+        border-bottom: 1px solid var(--ink-100);
+        vertical-align: middle;
+      }
+      .m-cust-table tbody tr:hover {
+        background: var(--ink-50);
+      }
+      .m-cust-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .m-cust-row__avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--ink-200);
+        color: var(--ink-800, var(--ink-900));
+        font-size: 12.5px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .m-cust-row b {
+        display: block;
+        font-weight: 600;
+        color: var(--ink-900);
+      }
+      .m-cust-row span {
+        font-size: 12px;
+        color: var(--ink-500);
+      }
+      .m-tier {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .m-tier--vip {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .m-tier--reg {
+        background: var(--ink-100);
+        color: var(--ink-700);
+      }
+      .m-tier--new {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/merchant-layout.js"></script>
+    <script>
+  (async () => {
+    if (!await MerchantLayout.render({ active: "customers", title: "Customers" }))
+            return;
+    
+          /* Build customer list from orders + registered users */
+          function buildCustomers() {
+            const byEmail = {};
+            // From orders
+            DataStore.getOrders().forEach((o) => {
+              const key = (
+                o.customer?.email ||
+                o.customer?.phone ||
+                "anon_" + o.id
+              ).toLowerCase();
+              if (!byEmail[key]) {
+                byEmail[key] = {
+                  id: key,
+                  name: o.customer?.name || "Anonymous",
+                  email: o.customer?.email || "",
+                  phone: o.customer?.phone || "",
+                  location: [o.customer?.city, o.customer?.county]
+                    .filter(Boolean)
+                    .join(", "),
+                  orderCount: 0,
+                  totalSpent: 0,
+                  lastOrderAt: o.createdAt,
+                  source: "order",
+                };
+              }
+              const c = byEmail[key];
+              c.orderCount += 1;
+              c.totalSpent += o.total || 0;
+              if (new Date(o.createdAt) > new Date(c.lastOrderAt))
+                c.lastOrderAt = o.createdAt;
+            });
+            return Object.values(byEmail).sort(
+              (a, b) => new Date(b.lastOrderAt) - new Date(a.lastOrderAt),
+            );
+          }
+    
+          function tierOf(c) {
+            if (c.totalSpent >= 30000) return ["vip", "VIP"];
+            if (c.orderCount >= 2) return ["reg", "Returning"];
+            return ["new", "New"];
+          }
+    
+          function render() {
+            const list = buildCustomers();
+            const totalSpent = list.reduce((a, c) => a + c.totalSpent, 0);
+            const vip = list.filter((c) => tierOf(c)[0] === "vip").length;
+    
+            document.getElementById("m-content").innerHTML = `
+            <div class="m-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+              <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="m-stat__body"><div class="m-stat__label">Total Customers</div><div class="m-stat__value">${list.length}</div><span class="m-stat__delta">All time</span></div></div>
+              <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 8.5 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 9 8.5 12 2"/></svg></div><div class="m-stat__body"><div class="m-stat__label">VIP Customers</div><div class="m-stat__value">${vip}</div><span class="m-stat__delta">KSh 30,000+ spent</span></div></div>
+              <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="m-stat__body"><div class="m-stat__label">Lifetime Revenue</div><div class="m-stat__value" style="font-size:22px">${fmtKSh(totalSpent)}</div><span class="m-stat__delta">From all orders</span></div></div>
+              <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="m-stat__body"><div class="m-stat__label">Active Chats</div><div class="m-stat__value">${DataStore.getMessages().filter((m) => m.sender === "customer").length}</div><span class="m-stat__delta">Customer-initiated</span></div></div>
+            </div>
+    
+            <div class="m-panel">
+              <div class="m-list-head">
+                <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;flex-grow:1">Customer List</h2>
+                <button class="btn btn--secondary" onclick="exportCustomers()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export CSV
+                </button>
+              </div>
+    
+              ${
+                list.length === 0
+                  ? `
+                <div style="padding:60px 20px;text-align:center;color:var(--ink-500)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin-bottom:14px;color:var(--ink-300)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                  <b style="display:block;font-size:17px;color:var(--ink-900);margin-bottom:4px">No customers yet</b>
+                  Customers will appear here once they register or place an order.
+                </div>
+              `
+                  : `
+                <table class="m-cust-table">
+                  <thead>
+                    <tr>
+                      <th>Customer</th><th>Location</th><th>Orders</th><th>Total Spent</th><th>Tier</th><th>Last Activity</th><th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${list
+                      .map((c) => {
+                        const [tKey, tLabel] = tierOf(c);
+                        const initials = c.name
+                          .split(" ")
+                          .map((s) => s[0])
+                          .slice(0, 2)
+                          .join("")
+                          .toUpperCase();
+                        const last = new Date(c.lastOrderAt).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "short", day: "numeric" },
+                        );
+                        return `
+                        <tr>
+                          <td>
+                            <div class="m-cust-row">
+                              <div class="m-cust-row__avatar">${initials}</div>
+                              <div>
+                                <b>${c.name}</b>
+                                <span>${c.email || c.phone || "—"}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td style="color:var(--ink-700);font-size:13px">${c.location || "—"}</td>
+                          <td>${c.orderCount}</td>
+                          <td><b style="color:var(--ink-900);font-weight:700">${fmtKSh(c.totalSpent)}</b></td>
+                          <td><span class="m-tier m-tier--${tKey}">${tLabel}</span></td>
+                          <td style="color:var(--ink-500);font-size:12.5px">${last}</td>
+                          <td class="text-right">
+                            <div class="m-row-actions">
+                              <a class="m-btn-icon" href="merchant-messages.html?c=${encodeURIComponent(c.id)}" title="Message">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                              </a>
+                            </div>
+                          </td>
+                        </tr>`;
+                      })
+                      .join("")}
+                  </tbody>
+                </table>
+              `
+              }
+            </div>
+          `;
+          }
+    
+          function exportCustomers() {
+            const list = buildCustomers();
+            const rows = [
+              [
+                "Name",
+                "Email",
+                "Phone",
+                "Location",
+                "Orders",
+                "Total Spent (KSh)",
+                "Tier",
+                "Last Activity",
+              ],
+            ].concat(
+              list.map((c) => {
+                const [, tier] = tierOf(c);
+                return [
+                  c.name,
+                  c.email,
+                  c.phone,
+                  c.location,
+                  c.orderCount,
+                  c.totalSpent,
+                  tier,
+                  c.lastOrderAt,
+                ];
+              }),
+            );
+            const csv = rows
+              .map((r) =>
+                r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+              )
+              .join("\n");
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "customers.csv";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 500);
+            Toast.show(`Exported ${list.length} customers`);
+          }
+    
+          render();
+  })();
+</script>
+  </body>
+</html>

@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Products · HOMART Merchant</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/merchant.css" />
+
+    <style>
+      /* Page-specific */
+      .m-intro {
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .m-intro__icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: var(--ink-50);
+        color: var(--green-700);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .m-intro__icon svg {
+        width: 22px;
+        height: 22px;
+      }
+      .m-intro__text {
+        flex-grow: 1;
+        min-width: 0;
+      }
+      .m-intro__text b {
+        display: block;
+        font-size: 15px;
+        color: var(--ink-900);
+        margin-bottom: 2px;
+      }
+      .m-intro__text span {
+        font-size: 13px;
+        color: var(--ink-500);
+      }
+      .m-intro__actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .m-tabstats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr) 240px;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .m-tabstat {
+        background: white;
+        border: 1.5px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 18px;
+        display: flex;
+        gap: 14px;
+        cursor: pointer;
+        transition: border-color 0.15s;
+      }
+      .m-tabstat:hover {
+        border-color: var(--ink-300, var(--ink-400));
+      }
+      .m-tabstat.is-active {
+        border-color: var(--green-700);
+        background: var(--green-50);
+      }
+      .m-tabstat__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: var(--ink-50);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .m-tabstat.is-active .m-tabstat__icon {
+        background: white;
+      }
+      .m-tabstat__icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .m-tabstat__icon--in svg {
+        color: var(--green-700);
+      }
+      .m-tabstat__icon--low svg {
+        color: #d97706;
+      }
+      .m-tabstat__icon--draft svg {
+        color: var(--ink-500);
+      }
+      .m-tabstat__icon--all svg {
+        color: var(--ink-700);
+      }
+      .m-tabstat__body {
+        min-width: 0;
+      }
+      .m-tabstat__label {
+        font-size: 12.5px;
+        color: var(--ink-500);
+      }
+      .m-tabstat__value {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--ink-900);
+        line-height: 1.1;
+        margin: 2px 0;
+      }
+      .m-tabstat__pct {
+        font-size: 12px;
+        color: var(--ink-500);
+      }
+
+      /* ── Floating bulk-action bar ── */
+      .m-bulk-bar {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(120%);
+        transition: transform .22s cubic-bezier(.4,0,.2,1);
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--ink-900);
+        color: white;
+        border-radius: 40px;
+        padding: 8px 10px 8px 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,.28);
+        white-space: nowrap;
+        font-size: 13px;
+      }
+      .m-bulk-bar.is-visible {
+        transform: translateX(-50%) translateY(0);
+      }
+      .m-bulk-bar__count {
+        font-weight: 700;
+        margin-right: 4px;
+        color: #86efac;
+      }
+      .m-bulk-bar__btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 32px;
+        border: none;
+        background: rgba(255,255,255,.12);
+        color: white;
+        font-size: 12.5px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background .15s;
+      }
+      .m-bulk-bar__btn svg { width:13px; height:13px; flex-shrink:0; }
+      .m-bulk-bar__btn:hover { background: rgba(255,255,255,.22); }
+      .m-bulk-bar__btn--del { color: #fca5a5; }
+      .m-bulk-bar__btn--del:hover { background: rgba(239,68,68,.25); color:#fca5a5; }
+      .m-bulk-bar__close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255,255,255,.1);
+        color: white;
+        cursor: pointer;
+        margin-left: 2px;
+      }
+      .m-bulk-bar__close:hover { background: rgba(255,255,255,.2); }
+
+      .m-list-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .m-list-head h2 {
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ink-900);
+        flex-grow: 1;
+      }
+      .m-list-search {
+        position: relative;
+        max-width: 320px;
+        flex-grow: 1;
+      }
+      .m-list-search svg {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 14px;
+        color: var(--ink-500);
+      }
+      .m-list-search input {
+        width: 100%;
+        height: 40px;
+        padding: 0 14px 0 36px;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-md);
+        font-size: 13.5px;
+        font-family: inherit;
+      }
+      .m-list-search input:focus {
+        outline: 0;
+        border-color: var(--green-700);
+        box-shadow: 0 0 0 3px rgba(30, 74, 52, 0.12);
+      }
+
+      .m-filter-select {
+        height: 40px;
+        padding: 0 36px 0 14px;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-md);
+        background: white
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")
+          no-repeat right 10px center / 14px;
+        appearance: none;
+        -webkit-appearance: none;
+        font-size: 13px;
+        font-family: inherit;
+        color: var(--ink-900);
+        cursor: pointer;
+        min-width: 160px;
+      }
+
+      .m-products-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      .m-products-table thead th {
+        text-align: left;
+        padding: 14px 12px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ink-500);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid var(--ink-100);
+      }
+      .m-products-table thead th.text-right {
+        text-align: right;
+      }
+      .m-products-table tbody td {
+        padding: 14px 12px;
+        border-bottom: 1px solid var(--ink-100);
+        vertical-align: middle;
+      }
+      .m-products-table tbody tr:hover {
+        background: var(--ink-50);
+      }
+      .m-products-table .checkbox {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--green-700);
+        cursor: pointer;
+      }
+
+      .m-updated-col {
+        color: var(--ink-500);
+        font-size: 12.5px;
+        line-height: 1.3;
+      }
+      .m-updated-col b {
+        color: var(--ink-900);
+        font-weight: 500;
+        display: block;
+        font-size: 13px;
+      }
+
+      .m-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 18px;
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--ink-500);
+      }
+      .m-pagination__pages {
+        display: flex;
+        gap: 4px;
+      }
+      .m-pagination__pages button {
+        width: 34px;
+        height: 34px;
+        background: white;
+        border: 1px solid var(--ink-200);
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--ink-700);
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .m-pagination__pages button:hover {
+        background: var(--ink-50);
+      }
+      .m-pagination__pages button.is-active {
+        background: var(--green-700);
+        border-color: var(--green-700);
+        color: white;
+      }
+
+      @media (max-width: 1200px) {
+        .m-tabstats { grid-template-columns: repeat(2, 1fr); }
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/merchant-layout.js"></script>
+    <script>
+  (async () => {
+    if (!await MerchantLayout.render({ active: "products", title: "Products" }))
+            return;
+    
+          const PER_PAGE = 10;
+          const state = {
+            page: 1,
+            q: URLParams.get("q") || "",
+            cat: "",
+            status: URLParams.get("status") || "all", // all | in | low | draft
+            selected: new Set(),
+          };
+    
+          /* ---------- Compose static markup ---------- */
+          document.getElementById("m-content").innerHTML = `
+          <!-- Intro bar -->
+          <div class="m-intro">
+            <div class="m-intro__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><polyline points="16 3 12 7 8 3"/></svg>
+            </div>
+            <div class="m-intro__text">
+              <b>Manage products, categories, pricing and stock in one place.</b>
+              <span>Keep your store catalog up to date and organized.</span>
+            </div>
+            <div class="m-intro__actions">
+              <a class="btn btn--primary" href="merchant-product-edit.html">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Product
+              </a>
+              <button class="btn btn--secondary" onclick="exportProducts()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
+              <button class="btn btn--secondary" onclick="Toast.show('Advanced filter coming soon')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                Filter
+              </button>
+            </div>
+          </div>
+    
+          <!-- Tab stats + bulk -->
+          <div class="m-tabstats">
+            <div class="m-tabstat ${state.status === "all" ? "is-active" : ""}" onclick="setStatus('all')">
+              <div class="m-tabstat__icon m-tabstat__icon--all">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <div class="m-tabstat__body">
+                <div class="m-tabstat__label">All Products</div>
+                <div class="m-tabstat__value" id="stat-all">0</div>
+                <div class="m-tabstat__pct">100% of all</div>
+              </div>
+            </div>
+            <div class="m-tabstat ${state.status === "in" ? "is-active" : ""}" onclick="setStatus('in')">
+              <div class="m-tabstat__icon m-tabstat__icon--in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              </div>
+              <div class="m-tabstat__body">
+                <div class="m-tabstat__label">In Stock</div>
+                <div class="m-tabstat__value" id="stat-in">0</div>
+                <div class="m-tabstat__pct" id="stat-in-pct">0% of all</div>
+              </div>
+            </div>
+            <div class="m-tabstat ${state.status === "low" ? "is-active" : ""}" onclick="setStatus('low')">
+              <div class="m-tabstat__icon m-tabstat__icon--low">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div class="m-tabstat__body">
+                <div class="m-tabstat__label">Low Stock</div>
+                <div class="m-tabstat__value" id="stat-low">0</div>
+                <div class="m-tabstat__pct" id="stat-low-pct">0% of all</div>
+              </div>
+            </div>
+            <div class="m-tabstat ${state.status === "draft" ? "is-active" : ""}" onclick="setStatus('draft')">
+              <div class="m-tabstat__icon m-tabstat__icon--draft">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <div class="m-tabstat__body">
+                <div class="m-tabstat__label">Drafts</div>
+                <div class="m-tabstat__value" id="stat-draft">0</div>
+                <div class="m-tabstat__pct" id="stat-draft-pct">0% of all</div>
+              </div>
+            </div>
+    
+          </div>
+
+          <!-- Floating bulk-action bar (shown only when items are selected) -->
+          <div class="m-bulk-bar" id="bulk-bar">
+            <span class="m-bulk-bar__count" id="bulk-count">0 selected</span>
+            <button class="m-bulk-bar__btn" onclick="bulkAction('price')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Update Price
+            </button>
+            <button class="m-bulk-bar__btn" onclick="bulkAction('category')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              Change Category
+            </button>
+            <button class="m-bulk-bar__btn" onclick="bulkAction('markOut')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              Mark Out of Stock
+            </button>
+            <button class="m-bulk-bar__btn m-bulk-bar__btn--del" onclick="bulkAction('delete')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+              Delete
+            </button>
+            <button class="m-bulk-bar__close" onclick="clearSelection()" title="Clear selection">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+    
+          <!-- Product list panel -->
+          <div class="m-panel">
+            <div class="m-list-head">
+              <h2>Product List</h2>
+              <div class="m-list-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="search" id="list-q" placeholder="Search by product name, SKU…" value="${escapeHtml(state.q)}"
+                       oninput="state.q=this.value; state.page=1; render()">
+              </div>
+              <select class="m-filter-select" id="list-cat" onchange="state.cat=this.value; state.page=1; render()">
+                <option value="">All Categories</option>
+                ${DataStore.getCategories()
+                  .map((c) => `<option value="${c.id}">${c.name}</option>`)
+                  .join("")}
+              </select>
+              <select class="m-filter-select" onchange="setStatus(this.value)">
+                <option value="all">All Status</option>
+                <option value="in">In Stock</option>
+                <option value="low">Low Stock</option>
+                <option value="out">Out of Stock</option>
+                <option value="draft">Drafts</option>
+              </select>
+            </div>
+    
+            <table class="m-products-table">
+              <thead>
+                <tr>
+                  <th style="width:36px"><input type="checkbox" class="checkbox" id="check-all" onchange="toggleAll(this.checked)"></th>
+                  <th>Product</th>
+                  <th>SKU</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th>Updated ⌄</th>
+                  <th class="text-right"></th>
+                </tr>
+              </thead>
+              <tbody id="p-body"></tbody>
+            </table>
+    
+            <div class="m-pagination">
+              <div id="p-count">Showing 0 products</div>
+              <div class="m-pagination__pages" id="p-pages"></div>
+            </div>
+          </div>
+        `;
+    
+          /* ---------- Filter + render ---------- */
+          function escapeHtml(s) {
+            return String(s || "").replace(
+              /[&<>"']/g,
+              (m) =>
+                ({
+                  "&": "&amp;",
+                  "<": "&lt;",
+                  ">": "&gt;",
+                  '"': "&quot;",
+                  "'": "&#39;",
+                })[m],
+            );
+          }
+    
+          function filtered() {
+            return DataStore.getProducts({ includeDrafts: true }).filter((p) => {
+              if (state.cat && p.category !== state.cat) return false;
+              if (state.q) {
+                const q = state.q.toLowerCase();
+                const hay = (
+                  p.name +
+                  " " +
+                  (p.sku || "") +
+                  " " +
+                  (p.shortDesc || "")
+                ).toLowerCase();
+                if (!hay.includes(q)) return false;
+              }
+              if (state.status === "in")
+                return p.inStock && (p.stockQty ?? 0) >= 15;
+              if (state.status === "low")
+                return p.inStock && (p.stockQty ?? 0) < 15;
+              if (state.status === "out") return !p.inStock;
+              if (state.status === "draft") return p.draft === true;
+              return true;
+            });
+          }
+    
+          function render() {
+            // Update tab-stat counts
+            const all = DataStore.getProducts({ includeDrafts: true });
+            const inStock = all.filter(
+              (p) => p.inStock && (p.stockQty ?? 0) >= 15,
+            ).length;
+            const low = all.filter(
+              (p) => p.inStock && (p.stockQty ?? 0) < 15,
+            ).length;
+            const draft = all.filter((p) => p.draft).length;
+            document.getElementById("stat-all").textContent = all.length;
+            document.getElementById("stat-in").textContent = inStock;
+            document.getElementById("stat-low").textContent = low;
+            document.getElementById("stat-draft").textContent = draft;
+            if (all.length) {
+              document.getElementById("stat-in-pct").textContent =
+                Math.round((inStock / all.length) * 100) + "% of all";
+              document.getElementById("stat-low-pct").textContent =
+                Math.round((low / all.length) * 100) + "% of all";
+              document.getElementById("stat-draft-pct").textContent = Math.round((draft / all.length) * 100) + "% of all";
+            }
+    
+            // Update active tabstat
+            document.querySelectorAll(".m-tabstat").forEach((el, i) => {
+              const statuses = ["all", "in", "low", "draft"];
+              el.classList.toggle("is-active", statuses[i] === state.status);
+            });
+    
+            // Filter & paginate
+            const list = filtered();
+            const totalPages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+            if (state.page > totalPages) state.page = totalPages;
+            const from = (state.page - 1) * PER_PAGE;
+            const page = list.slice(from, from + PER_PAGE);
+    
+            // Body
+            if (page.length === 0) {
+              document.getElementById("p-body").innerHTML = `
+              <tr><td colspan="9" style="padding:60px 12px;text-align:center;color:var(--ink-500)">
+                No products match your filters.
+              </td></tr>`;
+            } else {
+              document.getElementById("p-body").innerHTML = page
+                .map((p) => {
+                  const cat = DataStore.getCategory(p.category);
+                  const stockStatus = !p.inStock
+                    ? "out"
+                    : p.stockQty < 15
+                      ? "low"
+                      : "in";
+                  const statusPill = {
+                    in: '<span class="m-pill m-pill--in">In Stock</span>',
+                    low: '<span class="m-pill m-pill--low">Low Stock</span>',
+                    out: '<span class="m-pill m-pill--out">Out of Stock</span>',
+                  }[stockStatus];
+                  const now = new Date();
+                  const d = new Date(now - Math.random() * 14 * 86400000);
+                  const dateStr = d.toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  });
+                  const timeStr = d.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  return `
+                <tr>
+                  <td><input type="checkbox" class="checkbox row-check" value="${p.id}"
+                             ${state.selected.has(p.id) ? "checked" : ""}
+                             onchange="toggleRow('${p.id}', this.checked)"></td>
+                  <td>
+                    <div class="m-prod-cell">
+                      <img src="${p.image}" alt="" onerror="this.src='${FALLBACK_IMG}'">
+                      <div class="m-prod-cell__name">${p.name}</div>
+                    </div>
+                  </td>
+                  <td style="color:var(--ink-700);font-size:13px">${p.sku || "—"}</td>
+                  <td style="color:var(--ink-700);font-size:13px">${cat ? cat.name : p.category}</td>
+                  <td>${fmtKSh(p.price)}</td>
+                  <td>${p.stockQty ?? "—"}</td>
+                  <td>${statusPill}</td>
+                  <td class="m-updated-col"><b>${dateStr}</b>${timeStr}</td>
+                  <td class="text-right">
+                    <div class="m-row-actions">
+                      <a class="m-btn-icon" href="product.html?id=${p.id}" target="_blank" title="View on store">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </a>
+                      <a class="m-btn-icon" href="merchant-product-edit.html?id=${p.id}" title="Edit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </a>
+                      <button class="m-btn-icon m-btn-icon--del" onclick="deleteOne('${p.id}')" title="Delete">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>`;
+                })
+                .join("");
+            }
+    
+            // Count
+            document.getElementById("p-count").innerHTML =
+              `Showing ${list.length ? from + 1 : 0} to ${Math.min(from + PER_PAGE, list.length)} of ${list.length} products`;
+    
+            // Pages
+            let pagesHtml = `<button onclick="goPage(${state.page - 1})" ${state.page === 1 ? "disabled" : ""}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="15 18 9 12 15 6"/></svg></button>`;
+            const maxShow = Math.min(totalPages, 5);
+            for (let i = 1; i <= maxShow; i++) {
+              pagesHtml += `<button onclick="goPage(${i})" class="${i === state.page ? "is-active" : ""}">${i}</button>`;
+            }
+            if (totalPages > maxShow) {
+              pagesHtml += `<button disabled>…</button>`;
+              pagesHtml += `<button onclick="goPage(${totalPages})" class="${totalPages === state.page ? "is-active" : ""}">${totalPages}</button>`;
+            }
+            pagesHtml += `<button onclick="goPage(${state.page + 1})" ${state.page === totalPages ? "disabled" : ""}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="9 18 15 12 9 6"/></svg></button>`;
+            document.getElementById("p-pages").innerHTML = pagesHtml;
+    
+            // Check-all state
+            const checkAll = document.getElementById("check-all");
+            if (checkAll) {
+              const allChecked =
+                page.length > 0 && page.every((p) => state.selected.has(p.id));
+              checkAll.checked = allChecked;
+            }
+          }
+    
+          function setStatus(s) {
+            state.status = s;
+            state.page = 1;
+            render();
+          }
+          function goPage(n) {
+            state.page = n;
+            render();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
+          function updateBulkBar() {
+            const n = state.selected.size;
+            const bar = document.getElementById("bulk-bar");
+            const cnt = document.getElementById("bulk-count");
+            if (!bar) return;
+            if (n > 0) {
+              cnt.textContent = `${n} selected`;
+              bar.classList.add("is-visible");
+            } else {
+              bar.classList.remove("is-visible");
+            }
+          }
+          function clearSelection() {
+            state.selected.clear();
+            render();
+            updateBulkBar();
+          }
+          function toggleAll(on) {
+            const list = filtered();
+            const from = (state.page - 1) * PER_PAGE;
+            const page = list.slice(from, from + PER_PAGE);
+            page.forEach((p) =>
+              on ? state.selected.add(p.id) : state.selected.delete(p.id),
+            );
+            updateBulkBar();
+            render();
+          }
+          function toggleRow(id, on) {
+            on ? state.selected.add(id) : state.selected.delete(id);
+            updateBulkBar();
+          }
+          function deleteOne(id) {
+            if (!confirm("Delete this product? This cannot be undone.")) return;
+            DataStore.deleteProduct(id);
+            state.selected.delete(id);
+            Toast.show("Product deleted");
+            render();
+          }
+          function doneWithBulk() {
+            state.selected.clear();
+            updateBulkBar();
+            render();
+          }
+          function bulkAction(kind) {
+            if (state.selected.size === 0) {
+              Toast.show("Select at least one product first", "error");
+              return;
+            }
+            const ids = Array.from(state.selected);
+            if (kind === "delete") {
+              if (!confirm(`Delete ${ids.length} products?`)) return;
+              ids.forEach((id) => DataStore.deleteProduct(id));
+              Toast.show(`${ids.length} products deleted`);
+              doneWithBulk();
+              return;
+            }
+            if (kind === "price") {
+              const input = prompt(`Set new price (KSh) for ${ids.length} selected product${ids.length > 1 ? "s" : ""}:`);
+              if (input === null) return;
+              const n = parseFloat(input);
+              if (isNaN(n) || n < 0) { Toast.show("Invalid price", "error"); return; }
+              const list = DataStore.getProducts({ includeDrafts: true });
+              ids.forEach((id) => { const p = list.find((x) => x.id === id); if (p) p.price = Math.round(n); });
+              DataStore.saveProducts(list);
+              Toast.show(`Updated price to ${fmtKSh(n)} for ${ids.length} product${ids.length > 1 ? "s" : ""}`);
+              doneWithBulk();
+              return;
+            }
+            if (kind === "category") {
+              const cats = DataStore.getCategories();
+              const picker = cats.map((c, i) => `${i + 1}. ${c.name}`).join("\n");
+              const choice = prompt("Move to which category?\n\n" + picker + "\n\nEnter number:");
+              const idx = parseInt(choice) - 1;
+              if (isNaN(idx) || idx < 0 || idx >= cats.length) return;
+              const targetCat = cats[idx];
+              const list = DataStore.getProducts({ includeDrafts: true });
+              ids.forEach((id) => {
+                const p = list.find((x) => x.id === id);
+                if (p) { p.category = targetCat.id; p.subcategory = targetCat.subcategories[0]?.id || ""; }
+              });
+              DataStore.saveProducts(list);
+              Toast.show(`Moved ${ids.length} products to ${targetCat.name}`);
+              doneWithBulk();
+              return;
+            }
+            if (kind === "markOut") {
+              const list = DataStore.getProducts({ includeDrafts: true });
+              ids.forEach((id) => {
+                const p = list.find((x) => x.id === id);
+                if (p) { p.inStock = false; p.stockQty = 0; }
+              });
+              DataStore.saveProducts(list);
+              Toast.show(`Marked ${ids.length} products out of stock`);
+              doneWithBulk();
+              return;
+            }
+          }
+    
+          function exportProducts() {
+            const list = DataStore.getProducts({ includeDrafts: true });
+            const rows = [
+              ["ID", "Name", "SKU", "Category", "Price", "Stock", "InStock"],
+            ].concat(
+              list.map((p) => [
+                p.id,
+                p.name,
+                p.sku || "",
+                p.category,
+                p.price,
+                p.stockQty ?? "",
+                p.inStock ? "Y" : "N",
+              ]),
+            );
+            const csv = rows
+              .map((r) =>
+                r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","),
+              )
+              .join("\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "products.csv";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 500);
+            Toast.show("Exported " + list.length + " products");
+          }
+    
+          render();
+
+          window.bulkAction   = bulkAction;
+          window.toggleAll    = toggleAll;
+          window.toggleRow    = toggleRow;
+          window.deleteOne    = deleteOne;
+          window.goPage       = goPage;
+          window.setStatus    = setStatus;
+          window.clearSelection = clearSelection;
+          window.exportProducts = exportProducts;
+  })();
+</script>
+  </body>
+</html>
