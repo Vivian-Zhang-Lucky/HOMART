@@ -952,6 +952,14 @@
             Toast.show("Product deleted");
             setTimeout(() => MerchantLayout.navigate("merchant-products.html", { pushState: true }), 400);
           }
+
+          window.onCatChange = onCatChange;
+          window.countChars = countChars;
+          window.save = save;
+          window.deleteProd = deleteProd;
+          window.removeTag = removeTag;
+          window.addTag = addTag;
+          window.removeImage = removeImage;
   })();
 </script>
   </body>
