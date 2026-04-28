@@ -781,7 +781,7 @@ const DataStore = {
   },
   createOrder(order) {
     const list = this.getOrders();
-    order.id = "o" + Date.now().toString(36).toUpperCase();
+    order.id = "o" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
     order.status = order.status || "pending";
     order.createdAt = new Date().toISOString();
     list.unshift(order);

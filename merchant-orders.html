@@ -313,7 +313,16 @@
     
           /* Seed a few demo orders if none exist, so the table has content */
           (function seedDemoOrders() {
-            if (DataStore.getOrders().length > 0) return;
+            const existing = DataStore.getOrders();
+            // Clear duplicate-ID orders from old seed (Date.now() collision in sync forEach)
+            if (existing.length > 0) {
+              const uniqueIds = new Set(existing.map((o) => o.id));
+              if (uniqueIds.size < existing.length) {
+                localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+              } else {
+                return; // valid orders already exist
+              }
+            }
             const products = DataStore.getProducts();
             const demos = [
               {
@@ -684,6 +693,13 @@
             document.getElementById("drawer").classList.remove("is-open");
           }
     
+          window.setFilter = setFilter;
+          window.changeStatus = changeStatus;
+          window.openDrawer = openDrawer;
+          window.closeDrawer = closeDrawer;
+          window.render = render;
+          window.state = state;
+
           render();
   })();
 </script>
