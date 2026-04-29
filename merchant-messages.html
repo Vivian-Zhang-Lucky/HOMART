@@ -1444,7 +1444,7 @@
 
       let _sbMerchantUnsub = null;
       let _sbPollId = null;
-      (async function bootMessages() {
+      await (async function bootMessages() {
         if (window.SupabaseChat && SupabaseChat.isReady()) {
           state.useSb = true;
           // Show loading spinner while fetching from Supabase

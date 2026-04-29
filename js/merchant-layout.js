@@ -72,6 +72,15 @@ const MerchantLayout = {
           MerchantLayout.navigate(e.state.url, { pushState: false });
         }
       });
+      /* bfcache 恢复时重新加载当前页，避免显示过期数据快照 */
+      window.addEventListener("pageshow", (e) => {
+        if (e.persisted) {
+          MerchantLayout.navigate(
+            location.pathname + location.search,
+            { pushState: false },
+          );
+        }
+      });
       /* 记录当前页面状态，使浏览器返回键能回来 */
       history.replaceState(
         { spa: true, url: location.pathname + location.search },
