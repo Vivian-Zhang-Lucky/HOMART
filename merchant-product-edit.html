@@ -784,23 +784,19 @@
             renderImages();
           }
     
+          async function handleImageFiles(files) {
+              for (const f of files) {
+                if (!/^image\//.test(f.type)) continue;
+                const url = await DataStore.uploadImage(f);
+                if (url) images.push(url);
+              }
+              renderImages();
+            }
+
           document
             .getElementById("img-upload")
             .addEventListener("change", async (e) => {
-              const files = Array.from(e.target.files || []);
-              for (const f of files) {
-                if (f.size > 5 * 1024 * 1024) {
-                  Toast.show(`${f.name} is larger than 5MB`, "error");
-                  continue;
-                }
-                const dataUrl = await new Promise((res) => {
-                  const r = new FileReader();
-                  r.onload = () => res(r.result);
-                  r.readAsDataURL(f);
-                });
-                images.push(dataUrl);
-              }
-              renderImages();
+              await handleImageFiles(Array.from(e.target.files || []));
             });
           // drag & drop
           document
@@ -815,21 +811,7 @@
             .querySelector(".m-upload")
             .addEventListener("drop", async (e) => {
               e.preventDefault();
-              const files = Array.from(e.dataTransfer.files || []);
-              for (const f of files) {
-                if (!/^image\//.test(f.type)) continue;
-                if (f.size > 5 * 1024 * 1024) {
-                  Toast.show(`${f.name} is larger than 5MB`, "error");
-                  continue;
-                }
-                const dataUrl = await new Promise((res) => {
-                  const r = new FileReader();
-                  r.onload = () => res(r.result);
-                  r.readAsDataURL(f);
-                });
-                images.push(dataUrl);
-              }
-              renderImages();
+              await handleImageFiles(Array.from(e.dataTransfer.files || []));
             });
           renderImages();
     

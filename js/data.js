@@ -162,6 +162,31 @@ const FALLBACK_IMG =
 const INITIAL_PRODUCTS = [];
 
 /* ============================================================
+   图片压缩工具（canvas 缩放 + JPEG 压缩，用于 localStorage 回退场景）
+   ============================================================ */
+function compressImage(file, maxPx = 1200, quality = 0.82) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxPx || height > maxPx) {
+        if (width > height) { height = Math.round(height * maxPx / width); width = maxPx; }
+        else { width = Math.round(width * maxPx / height); height = maxPx; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+/* ============================================================
    DataStore — 数据操作 API（客户版 + 商家版 共用）
    ============================================================ */
 const DataStore = {
@@ -385,6 +410,25 @@ const DataStore = {
     return msg;
   },
 
+  /* ---------- 图片上传（Supabase Storage 优先，回退压缩 base64） ---------- */
+  async uploadImage(file) {
+    const sb = window._sbClient;
+    if (sb) {
+      try {
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { data, error } = await sb.storage
+          .from("product-images")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (!error && data) {
+          const { data: urlData } = sb.storage.from("product-images").getPublicUrl(data.path);
+          return urlData.publicUrl;
+        }
+      } catch (e) {}
+    }
+    return compressImage(file);
+  },
+
   /* ---------- Supabase product sync ---------- */
   async fetchProductsFromSupabase() {
     const sb = window._sbClient;
@@ -430,6 +474,7 @@ const DataStore = {
 
 /* 全局暴露 */
 window.DataStore = DataStore;
+window.compressImage = compressImage;
 window.STORAGE_KEYS = STORAGE_KEYS;
 window.FALLBACK_IMG = FALLBACK_IMG;
 

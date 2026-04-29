@@ -1,6 +1,11 @@
 -- HOMART 演示表（在 Supabase SQL Editor 中整段执行）
 -- 执行后：Database → Replication → 为 public.messages 打开 Realtime
 
+-- 产品图片 Storage 桶（在 Supabase Dashboard → Storage → New bucket 手动创建）
+-- Bucket 名称：product-images
+-- Public bucket：开启（允许匿名读取图片 URL）
+-- 创建后在 Storage → Policies 添加策略：允许 anon 角色 INSERT / SELECT
+
 -- 产品同步表（商家端写入，顾客端读取，实现跨设备产品同步）
 create table if not exists store_config (
   key text primary key,
