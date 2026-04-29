@@ -784,26 +784,61 @@
             renderImages();
           }
     
-          async function handleImageFiles(files) {
-              for (const f of files) {
-                if (!/^image\//.test(f.type)) continue;
-                const url = await DataStore.uploadImage(f);
-                if (url) images.push(url);
-              }
-              renderImages();
+          async function _compressImage(file) {
+            return new Promise((resolve) => {
+              const img = new Image();
+              const url = URL.createObjectURL(file);
+              img.onload = () => {
+                URL.revokeObjectURL(url);
+                const maxPx = 1200;
+                let { width, height } = img;
+                if (width > maxPx || height > maxPx) {
+                  if (width > height) { height = Math.round(height * maxPx / width); width = maxPx; }
+                  else { width = Math.round(width * maxPx / height); height = maxPx; }
+                }
+                const canvas = document.createElement("canvas");
+                canvas.width = width; canvas.height = height;
+                canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL("image/jpeg", 0.82));
+              };
+              img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+              img.src = url;
+            });
+          }
+
+          async function _uploadImage(file) {
+            const sb = window._sbClient;
+            if (sb) {
+              try {
+                const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+                const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                const { data, error } = await sb.storage
+                  .from("product-images")
+                  .upload(path, file, { contentType: file.type, upsert: false });
+                if (!error && data) {
+                  const { data: urlData } = sb.storage.from("product-images").getPublicUrl(data.path);
+                  return urlData.publicUrl;
+                }
+              } catch (e) {}
             }
+            return _compressImage(file);
+          }
+
+          async function handleImageFiles(files) {
+            for (const f of files) {
+              if (!/^image\//.test(f.type)) continue;
+              const url = await _uploadImage(f);
+              if (url) images.push(url);
+            }
+            renderImages();
+          }
 
           document
             .getElementById("img-upload")
             .addEventListener("change", async (e) => {
               await handleImageFiles(Array.from(e.target.files || []));
             });
-          // drag & drop
-          document
-            .querySelector(".m-upload")
-            .addEventListener("click", () =>
-              document.getElementById("img-upload").click(),
-            );
+          // drag & drop — label 已与 input 关联，无需额外的 click 监听器
           document.querySelector(".m-upload").addEventListener("dragover", (e) => {
             e.preventDefault();
           });
