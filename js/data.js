@@ -298,6 +298,11 @@ const DataStore = {
     order.createdAt = new Date().toISOString();
     list.unshift(order);
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(list));
+    if (window._sbClient) {
+      this.syncOrdersToSupabase().catch((e) => {
+        console.warn("[Sync] syncOrdersToSupabase failed:", e?.message || e);
+      });
+    }
     return order;
   },
 
@@ -452,6 +457,32 @@ const DataStore = {
       updated_at: new Date().toISOString(),
     });
     if (error) { console.error("[Sync] store_config upsert failed:", error.message); return false; }
+    return true;
+  },
+
+  /* ---------- Supabase order sync ---------- */
+  async fetchOrdersFromSupabase() {
+    const sb = window._sbClient;
+    if (!sb) return false;
+    const { data, error } = await sb
+      .from("store_config")
+      .select("value")
+      .eq("key", "orders")
+      .maybeSingle();
+    if (error || !data?.value || !Array.isArray(data.value)) return false;
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(data.value));
+    return true;
+  },
+  async syncOrdersToSupabase() {
+    const sb = window._sbClient;
+    if (!sb) return false;
+    const orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || "[]");
+    const { error } = await sb.from("store_config").upsert({
+      key: "orders",
+      value: orders,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) { console.error("[Sync] orders upsert failed:", error.message); return false; }
     return true;
   },
 

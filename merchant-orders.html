@@ -303,17 +303,26 @@
     <script src="js/auth.js"></script>
     <script src="js/data.js"></script>
     <script src="js/cart.js"></script>
+    <script src="js/supabase-chat.js"></script>
     <script src="js/merchant-layout.js"></script>
     <script>
   (async () => {
     if (!await MerchantLayout.render({ active: "orders", title: "Orders" }))
             return;
-    
-          const state = { statusFilter: "all", q: "" };
+          const state = { statusFilter: "all", q: "", orders: [], useSb: false };
+
+          async function waitForCloudReady(timeoutMs = 2000) {
+            const start = Date.now();
+            while (Date.now() - start < timeoutMs) {
+              if (window._sbClient) return true;
+              await new Promise((r) => setTimeout(r, 80));
+            }
+            return !!window._sbClient;
+          }
     
     
           function render() {
-            const orders = DataStore.getOrders();
+            const orders = state.orders;
             const counts = {
               all: orders.length,
               pending: orders.filter((o) => o.status === "pending").length,
@@ -488,7 +497,7 @@
           }
     
           function refreshStats() {
-            const orders = DataStore.getOrders();
+            const orders = state.orders;
             const revenue = orders.filter(o => o.status !== "cancelled").reduce((a, o) => a + (o.total || 0), 0);
             const counts = {
               all: orders.length,
@@ -506,12 +515,17 @@
           }
 
           function changeStatus(orderId, newStatus, selectEl) {
-            const orders = DataStore.getOrders();
-            const o = orders.find((x) => x.id === orderId);
+            const o = state.orders.find((x) => x.id === orderId);
             if (!o) return;
             o.status = newStatus;
             o.updatedAt = new Date().toISOString();
-            localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+            localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(state.orders));
+            if (state.useSb) {
+              DataStore.syncOrdersToSupabase().catch((err) => {
+                console.error("[Orders] sync failed:", err);
+                Toast.show("Cloud sync failed", "error");
+              });
+            }
             Toast.show("Status updated to " + newStatus);
             selectEl.className = "m-order-status-sel s-" + newStatus;
             refreshStats();
@@ -519,7 +533,7 @@
           }
     
           function openDrawer(orderId) {
-            const o = DataStore.getOrders().find((x) => x.id === orderId);
+            const o = state.orders.find((x) => x.id === orderId);
             if (!o) return;
             const panel = document.getElementById("drawer-panel");
             const date = new Date(o.createdAt).toLocaleString();
@@ -602,6 +616,35 @@
           window.closeDrawer = closeDrawer;
           window.render = render;
           window.state = state;
+
+          const hasCloudConfig = !!window.SUPABASE_URL;
+          const cloudReady = await waitForCloudReady(2200);
+          if (cloudReady) {
+            state.useSb = true;
+            const loaded = await DataStore.fetchOrdersFromSupabase();
+            state.orders = loaded ? DataStore.getOrders() : [];
+            if (!loaded) {
+              Toast.show("Could not load orders from cloud.", "info");
+            }
+          } else if (hasCloudConfig) {
+            state.orders = [];
+            Toast.show("Order service is still starting. Please wait a moment.", "info");
+          } else {
+            state.orders = DataStore.getOrders();
+          }
+
+          let _pollId = null;
+          if (state.useSb) {
+            _pollId = setInterval(async () => {
+              const ok = await DataStore.fetchOrdersFromSupabase();
+              if (!ok) return;
+              state.orders = DataStore.getOrders();
+              render();
+            }, 4000);
+          }
+          MerchantLayout._pageCleanup = () => {
+            if (_pollId) clearInterval(_pollId);
+          };
 
           render();
   })();
