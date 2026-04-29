@@ -608,6 +608,27 @@
         cursor: pointer;
       }
 
+      .m-inbox-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        color: var(--ink-400);
+        font-size: 13px;
+        gap: 8px;
+      }
+      .m-inbox-loading::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--ink-200);
+        border-top-color: var(--green-700);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        flex-shrink: 0;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
       .m-quick-act {
         display: flex;
         flex-direction: column;
@@ -1426,26 +1447,24 @@
       (async function bootMessages() {
         if (window.SupabaseChat && SupabaseChat.isReady()) {
           state.useSb = true;
+          // Show loading spinner while fetching from Supabase
+          const listEl = document.getElementById("conv-list");
+          if (listEl) listEl.innerHTML = '<div class="m-inbox-loading">Loading conversations…</div>';
           try {
             await loadFromSupabase();
             if (_sbMerchantUnsub) _sbMerchantUnsub();
             _sbMerchantUnsub = SupabaseChat.subscribeMerchantMessages(() => {
               void refreshFromStore();
             });
-            /* Realtime 未配置或失败时仍定期同步云端收件箱 */
             _sbPollId = setInterval(() => {
               if (!state.useSb) return;
               void refreshFromStore();
             }, 4000);
           } catch (err) {
-            console.error(err);
-            state.useSb = false;
-            Toast.show(
-              "Cloud inbox unavailable — showing local data. " +
-                (err && err.message ? "(" + err.message + ")" : ""),
-              "info",
-            );
-            loadConversations();
+            console.error("[Messages] Supabase load failed:", err);
+            // Do NOT fall back to stale localStorage — show empty state instead
+            state.conversations = [];
+            Toast.show("Could not load inbox from cloud. Please refresh.", "error");
           }
         } else {
           loadConversations();

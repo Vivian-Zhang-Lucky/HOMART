@@ -16,7 +16,7 @@ const STORAGE_KEYS = {
   CONVERSATIONS: "HOMART.conversations",
   SESSION: "HOMART.session",
   WISHLIST: "HOMART.wishlist",
-  SEED: "HOMART.seeded.v2",
+  SEED: "HOMART.seeded.v3",
 };
 
 /* ---------- 分类结构 ---------- */
