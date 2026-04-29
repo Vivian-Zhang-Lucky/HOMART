@@ -605,6 +605,11 @@
           }
         });
         DataStore.saveProducts(allProds);
+        if (window._sbClient) {
+          void DataStore.syncProductsToSupabase().catch((e) =>
+            console.warn("[Sync] syncProductsToSupabase failed:", e?.message || e),
+          );
+        }
 
         Cart.clear();
         state.step = 4;

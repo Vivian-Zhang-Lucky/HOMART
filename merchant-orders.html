@@ -426,6 +426,11 @@
                           o.items.length > 3
                             ? `<span>+${o.items.length - 3} more</span>`
                             : "";
+                        const totalUnits = o.items.reduce((s, it) => s + (Number(it.qty) || 0), 0);
+                        const qtyHint = o.items
+                          .slice(0, 2)
+                          .map((it) => `${it.name} x${it.qty}`)
+                          .join(" · ");
                         const date = new Date(o.createdAt).toLocaleDateString(
                           "en-US",
                           { year: "numeric", month: "short", day: "numeric" },
@@ -441,7 +446,7 @@
                               <span>${o.customer?.phone || ""}</span>
                             </div>
                           </td>
-                          <td><div class="m-order-items">${itemImgs}${more}</div></td>
+                          <td><div class="m-order-items" title="${escapeHtml(qtyHint)}">${itemImgs}${more}<span>${totalUnits} pcs</span></div></td>
                           <td><b style="color:var(--ink-900);font-weight:700">${fmtKSh(o.total)}</b></td>
                           <td style="color:var(--ink-700);font-size:13px">${payLabel}</td>
                           <td onclick="event.stopPropagation()">

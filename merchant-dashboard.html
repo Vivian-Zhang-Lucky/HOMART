@@ -316,6 +316,38 @@
     } else {
       strip.style.display = "none";
     }
+
+    let _lastOrderCount = orders.length;
+    const _pollId = setInterval(async () => {
+      let shouldRefresh = false;
+      if (window._sbClient) {
+        const ok = await DataStore.fetchOrdersFromSupabase();
+        if (ok) {
+          const nextOrders = DataStore.getOrders();
+          if (nextOrders.length > _lastOrderCount) {
+            const delta = nextOrders.length - _lastOrderCount;
+            Toast.show(`New order received (${delta})`, "success");
+          }
+          if (nextOrders.length !== _lastOrderCount) {
+            _lastOrderCount = nextOrders.length;
+            shouldRefresh = true;
+          }
+        }
+      } else {
+        const nextCount = DataStore.getOrders().length;
+        if (nextCount > _lastOrderCount) {
+          Toast.show(`New order received (${nextCount - _lastOrderCount})`, "success");
+        }
+        if (nextCount !== _lastOrderCount) {
+          _lastOrderCount = nextCount;
+          shouldRefresh = true;
+        }
+      }
+      if (shouldRefresh) {
+        MerchantLayout.navigate("merchant-dashboard.html", { pushState: false });
+      }
+    }, 4000);
+    MerchantLayout._pageCleanup = () => clearInterval(_pollId);
   })();
 </script>
   </body>

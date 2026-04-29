@@ -138,25 +138,20 @@
               if (new Date(o.createdAt) > new Date(c.lastOrderAt))
                 c.lastOrderAt = o.createdAt;
             });
+            const convByCustomerKey = {};
             state.conversations.forEach((cv) => {
-              const key = (cv.customer_id || cv.customer_email || cv.id || "").toLowerCase();
-              if (!key) return;
-              if (!byEmail[key]) {
-                byEmail[key] = {
-                  id: key,
-                  name: cv.customer_name || "Customer",
-                  email: cv.customer_email || "",
-                  phone: "",
-                  location: "",
-                  orderCount: 0,
-                  totalSpent: 0,
-                  lastOrderAt: cv.last_at || cv.created_at || new Date().toISOString(),
-                  source: "conversation",
-                  conversationId: cv.id,
-                };
-              } else if (!byEmail[key].conversationId) {
-                byEmail[key].conversationId = cv.id;
-              }
+              const keys = [
+                (cv.customer_email || "").toLowerCase(),
+                (cv.customer_id || "").toLowerCase(),
+              ].filter(Boolean);
+              keys.forEach((k) => {
+                if (!convByCustomerKey[k]) convByCustomerKey[k] = cv.id;
+              });
+            });
+            Object.values(byEmail).forEach((c) => {
+              const keyEmail = (c.email || "").toLowerCase();
+              const keyPhone = (c.phone || "").toLowerCase();
+              c.conversationId = convByCustomerKey[keyEmail] || convByCustomerKey[keyPhone] || null;
             });
             return Object.values(byEmail).sort(
               (a, b) => new Date(b.lastOrderAt) - new Date(a.lastOrderAt),
@@ -179,7 +174,7 @@
               <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="m-stat__body"><div class="m-stat__label">Total Customers</div><div class="m-stat__value">${list.length}</div><span class="m-stat__delta">All time</span></div></div>
               <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 8.5 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 9 8.5 12 2"/></svg></div><div class="m-stat__body"><div class="m-stat__label">VIP Customers</div><div class="m-stat__value">${vip}</div><span class="m-stat__delta">KSh 30,000+ spent</span></div></div>
               <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="m-stat__body"><div class="m-stat__label">Lifetime Revenue</div><div class="m-stat__value" style="font-size:22px">${fmtKSh(totalSpent)}</div><span class="m-stat__delta">From all orders</span></div></div>
-              <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="m-stat__body"><div class="m-stat__label">Active Chats</div><div class="m-stat__value">${state.conversations.length}</div><span class="m-stat__delta">Cloud conversations</span></div></div>
+              <div class="m-stat"><div class="m-stat__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="m-stat__body"><div class="m-stat__label">Active Chats</div><div class="m-stat__value">${list.filter((c) => !!c.conversationId).length}</div><span class="m-stat__delta">Order customers only</span></div></div>
             </div>
     
             <div class="m-panel">

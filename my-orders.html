@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Orders · HOMART Hardware</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .my-orders-wrap { padding: 26px 0 54px; }
+      .my-orders-head h1 { font-family: var(--font-display); font-size: 32px; margin-bottom: 6px; }
+      .my-orders-head p { color: var(--ink-500); margin-bottom: 20px; }
+      .my-orders-list { display: flex; flex-direction: column; gap: 14px; }
+      .my-order {
+        background: #fff;
+        border: 1px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 16px;
+      }
+      .my-order__top {
+        display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        margin-bottom: 12px;
+      }
+      .my-order__id { font-weight: 700; color: var(--ink-900); }
+      .my-order__meta { color: var(--ink-500); font-size: 13px; }
+      .my-order__status {
+        display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+        border-radius: 999px; font-size: 12px; font-weight: 700;
+      }
+      .s-pending { background: #fef3c7; color: #92400e; }
+      .s-processing { background: #dbeafe; color: #1e40af; }
+      .s-shipped { background: #ede9fe; color: #5b21b6; }
+      .s-delivered { background: #dcfce7; color: #166534; }
+      .s-cancelled { background: #fee2e2; color: #991b1b; }
+      .my-order__items { color: var(--ink-700); font-size: 13px; margin-bottom: 8px; }
+      .my-order__foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+      .my-order__track { color: var(--ink-600); font-size: 12.5px; }
+      .my-order-empty {
+        text-align: center; color: var(--ink-500); padding: 56px 20px; background: #fff;
+        border: 1px solid var(--ink-200); border-radius: var(--r-lg);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header-slot"></div>
+    <div id="trustbar-slot"></div>
+    <main class="container my-orders-wrap">
+      <div class="my-orders-head">
+        <h1>My Orders</h1>
+        <p>Track your delivery status in real time.</p>
+      </div>
+      <div id="my-orders-list"></div>
+    </main>
+    <div id="footer-slot"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/supabase-chat.js"></script>
+    <script src="js/layout.js"></script>
+    <script>
+      (async () => {
+        Layout.render();
+        if (!await Auth.requireAny()) return;
+
+        const user = Auth.current() || {};
+        const emailKey = (user.email || DataStore.getSession()?.email || "").toLowerCase();
+
+        function trackText(status) {
+          if (status === "pending") return "Order placed. Waiting for merchant confirmation.";
+          if (status === "processing") return "Merchant is preparing your items.";
+          if (status === "shipped") return "Your order is on the way.";
+          if (status === "delivered") return "Delivered successfully.";
+          if (status === "cancelled") return "This order was cancelled.";
+          return "Status updated.";
+        }
+
+        function loadMyOrders() {
+          return DataStore.getOrders()
+            .filter((o) => ((o.customer?.email || "").toLowerCase() === emailKey))
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
+        function renderOrders() {
+          const list = loadMyOrders();
+          const el = document.getElementById("my-orders-list");
+          if (!list.length) {
+            el.innerHTML = `<div class="my-order-empty"><b>No orders yet.</b><br/>Place an order to start tracking delivery.</div>`;
+            return;
+          }
+          el.innerHTML = `<div class="my-orders-list">${list.map((o) => {
+            const units = (o.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0);
+            const placed = new Date(o.createdAt).toLocaleString();
+            return `
+              <article class="my-order">
+                <div class="my-order__top">
+                  <div>
+                    <div class="my-order__id">${o.id}</div>
+                    <div class="my-order__meta">Placed: ${placed}</div>
+                  </div>
+                  <span class="my-order__status s-${o.status}">${o.status || "pending"}</span>
+                </div>
+                <div class="my-order__items">${(o.items || []).length} items · ${units} pcs · ${fmtKSh(o.total)}</div>
+                <div class="my-order__foot">
+                  <div class="my-order__track">${trackText(o.status)}</div>
+                </div>
+              </article>
+            `;
+          }).join("")}</div>`;
+        }
+
+        async function refreshFromCloud() {
+          if (window._sbClient) {
+            await DataStore.fetchOrdersFromSupabase();
+          }
+          renderOrders();
+        }
+
+        await refreshFromCloud();
+        setInterval(() => { void refreshFromCloud(); }, 5000);
+      })();
+    </script>
+  </body>
+</html>
