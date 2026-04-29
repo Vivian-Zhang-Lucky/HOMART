@@ -25,6 +25,10 @@
   (async () => {
     if (!await MerchantLayout.render({ active: "dashboard", title: "Merchant Dashboard" })) return;
 
+    if (window._sbClient) {
+      await DataStore.fetchOrdersFromSupabase().catch(() => false);
+      await DataStore.fetchProductsFromSupabase().catch(() => false);
+    }
     const products   = DataStore.getProducts({ includeDrafts: true });
     const categories = DataStore.getCategories();
     const orders     = DataStore.getOrders();
@@ -317,31 +321,35 @@
       strip.style.display = "none";
     }
 
+    const stockSig = (list) =>
+      list.map((p) => `${p.id}:${p.stockQty ?? 0}:${p.inStock ? 1 : 0}`).join("|");
     let _lastOrderCount = orders.length;
+    let _lastStockSig = stockSig(products);
     const _pollId = setInterval(async () => {
       let shouldRefresh = false;
       if (window._sbClient) {
-        const ok = await DataStore.fetchOrdersFromSupabase();
-        if (ok) {
-          const nextOrders = DataStore.getOrders();
-          if (nextOrders.length > _lastOrderCount) {
-            const delta = nextOrders.length - _lastOrderCount;
-            Toast.show(`New order received (${delta})`, "success");
-          }
-          if (nextOrders.length !== _lastOrderCount) {
-            _lastOrderCount = nextOrders.length;
-            shouldRefresh = true;
-          }
-        }
+        await DataStore.fetchOrdersFromSupabase().catch(() => false);
+        await DataStore.fetchProductsFromSupabase().catch(() => false);
+      }
+
+      const nextOrders = DataStore.getOrders();
+      const nextProducts = DataStore.getProducts({ includeDrafts: true });
+      const nextStockSig = stockSig(nextProducts);
+
+      if (nextOrders.length > _lastOrderCount) {
+        const delta = nextOrders.length - _lastOrderCount;
+        Toast.show(`New order received (${delta})`, "success");
+      }
+      if (nextOrders.length !== _lastOrderCount || nextStockSig !== _lastStockSig) {
+        _lastOrderCount = nextOrders.length;
+        _lastStockSig = nextStockSig;
+        shouldRefresh = true;
+      }
+
+      if (!window._sbClient) {
+        // Local-only fallback already handled above by reading local storage.
       } else {
-        const nextCount = DataStore.getOrders().length;
-        if (nextCount > _lastOrderCount) {
-          Toast.show(`New order received (${nextCount - _lastOrderCount})`, "success");
-        }
-        if (nextCount !== _lastOrderCount) {
-          _lastOrderCount = nextCount;
-          shouldRefresh = true;
-        }
+        // noop, cloud path handled above
       }
       if (shouldRefresh) {
         MerchantLayout.navigate("merchant-dashboard.html", { pushState: false });
