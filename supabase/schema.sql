@@ -1,5 +1,17 @@
--- HOMART 演示聊天表（在 Supabase SQL Editor 中整段执行）
+-- HOMART 演示表（在 Supabase SQL Editor 中整段执行）
 -- 执行后：Database → Replication → 为 public.messages 打开 Realtime
+
+-- 产品同步表（商家端写入，顾客端读取，实现跨设备产品同步）
+create table if not exists store_config (
+  key text primary key,
+  value jsonb,
+  updated_at timestamptz default now()
+);
+
+alter table store_config enable row level security;
+
+drop policy if exists "demo_store_config_all" on store_config;
+create policy "demo_store_config_all" on store_config for all using (true) with check (true);
 
 create table if not exists conversations (
   id uuid primary key default gen_random_uuid(),
