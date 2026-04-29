@@ -740,200 +740,6 @@
        Messages page — reads from DataStore in real-time
        ============================================================ */
 
-      const PLACEHOLDER_CONVERSATIONS = [
-        {
-          id: "c_john",
-          name: "John Muchiri",
-          phone: "+254 712 345 678",
-          location: "Kisumu, Kenya",
-          role: "Contractor",
-          tags: ["Frequent Buyer", "Plumbing Projects"],
-          online: true,
-          messages: [
-            {
-              sender: "customer",
-              at: "10:18",
-              text: "Hi, do you have 4-inch PVC pipes in stock?",
-            },
-            {
-              sender: "customer",
-              at: "10:18",
-              text: "I need about 60 pieces for a project in Kisumu.",
-            },
-            {
-              sender: "seller",
-              at: "10:19",
-              text: 'Hello John, yes we do have uPVC Pipe 110mm (4") in stock.',
-            },
-            {
-              sender: "seller",
-              at: "10:19",
-              text: "The current stock is 65 pieces.",
-            },
-            {
-              sender: "customer",
-              at: "10:20",
-              text: "Great! What's the price per piece for 60 pieces?",
-            },
-            {
-              sender: "seller",
-              at: "10:21",
-              text: "For 60 pieces, we can offer KSh 1,450 per piece.",
-            },
-            {
-              sender: "seller",
-              at: "10:21",
-              type: "quote",
-              text: 'uPVC Pipe 110mm (4") — KSh 1,450 each',
-            },
-            {
-              sender: "customer",
-              at: "10:22",
-              text: "That works for me. How soon can you deliver to Kisumu?",
-            },
-            {
-              sender: "seller",
-              at: "10:23",
-              text: "We can deliver within 2 business days via our logistics partner.",
-            },
-            {
-              sender: "seller",
-              at: "10:23",
-              type: "product",
-              productId: "p001",
-            },
-            {
-              sender: "customer",
-              at: "10:24",
-              text: "Perfect, please send me the payment details.",
-            },
-          ],
-          preview: 'Do you have 4" PVC pipes in stock...',
-          previewTime: "10:24 AM",
-          unread: true,
-          status: "quotation",
-        },
-        {
-          id: "c_anne",
-          name: "Anne Wanjiku",
-          phone: "+254 722 456 789",
-          location: "Nairobi, Kenya",
-          role: "Retailer",
-          tags: ["Wholesale"],
-          online: true,
-          messages: [
-            {
-              sender: "customer",
-              at: "9:48",
-              text: "Kindly share bulk prices for basin taps.",
-            },
-          ],
-          preview: "Kindly share bulk prices for basin taps...",
-          previewTime: "9:48 AM",
-          unread: true,
-          status: "quotation",
-        },
-        {
-          id: "c_peter",
-          name: "Peter Odhiambo",
-          phone: "+254 733 123 456",
-          location: "Kisumu, Kenya",
-          role: "Builder",
-          tags: ["Delivery Queries"],
-          online: false,
-          messages: [
-            {
-              sender: "customer",
-              at: "Yesterday",
-              text: "What's the delivery time to Kisumu?",
-            },
-          ],
-          preview: "What's the delivery time to Kisumu?",
-          previewTime: "Yesterday",
-          unread: true,
-          status: "all",
-        },
-        {
-          id: "c_grace",
-          name: "Grace Njoki",
-          phone: "+254 701 789 012",
-          location: "Nakuru, Kenya",
-          role: "Homeowner",
-          tags: ["Support"],
-          online: false,
-          messages: [
-            {
-              sender: "customer",
-              at: "Yesterday",
-              text: "Need help with product installation.",
-            },
-          ],
-          preview: "Need help with product installation.",
-          previewTime: "Yesterday",
-          unread: true,
-          status: "all",
-        },
-        {
-          id: "c_david",
-          name: "David Kiptoo",
-          phone: "+254 798 321 654",
-          location: "Eldoret, Kenya",
-          role: "Contractor",
-          tags: ["Bathroom Fixtures"],
-          online: false,
-          messages: [
-            {
-              sender: "customer",
-              at: "2 days ago",
-              text: "Requesting quote for bathroom fittings.",
-            },
-          ],
-          preview: "Requesting quote for bathroom fittings.",
-          previewTime: "2 days ago",
-          unread: false,
-          status: "quotation",
-        },
-        {
-          id: "c_mercy",
-          name: "Mercy Akinyi",
-          phone: "+254 715 987 654",
-          location: "Mombasa, Kenya",
-          role: "Hardware Store Owner",
-          tags: ["Wholesale", "Valves"],
-          online: false,
-          messages: [
-            {
-              sender: "customer",
-              at: "2 days ago",
-              text: "Do you supply valves in bulk?",
-            },
-          ],
-          preview: "Do you supply valves in bulk?",
-          previewTime: "2 days ago",
-          unread: false,
-          status: "quotation",
-        },
-        {
-          id: "c_brian",
-          name: "Brian Mwangi",
-          phone: "+254 720 111 222",
-          location: "Nairobi, Kenya",
-          role: "Plumber",
-          tags: ["Fittings"],
-          online: false,
-          messages: [
-            {
-              sender: "customer",
-              at: "3 days ago",
-              text: "Looking for pipe fittings and accessories.",
-            },
-          ],
-          preview: "Looking for pipe fittings and accessories.",
-          previewTime: "3 days ago",
-          unread: false,
-          status: "resolved",
-        },
-      ];
 
       /* ---------- State ---------- */
       const state = {
@@ -948,18 +754,10 @@
         const storedConvs = DataStore.getConversations();
         const allMsgs = DataStore.getMessages();
 
-        if (storedConvs.length === 0) {
-          // No real conversations yet — show placeholder data so the page isn't empty
-          state.conversations = PLACEHOLDER_CONVERSATIONS;
-          if (!state.activeId) state.activeId = state.conversations[0]?.id || null;
-          return;
-        }
-
         state.conversations = storedConvs.map((conv) => {
           const msgs = allMsgs.filter((m) => m.conversationId === conv.id);
           return {
             ...conv,
-            // bridge fields used by renderBubble / renderCust
             name: conv.customerName,
             phone: conv.customerPhone || "",
             location: conv.customerLocation || "",
@@ -973,7 +771,6 @@
           };
         });
 
-        // reset activeId if it pointed to placeholder data or an id that no longer exists
         const realIds = state.conversations.map((c) => c.id);
         if (!state.activeId || !realIds.includes(state.activeId)) {
           state.activeId = state.conversations[0]?.id || null;
@@ -1025,8 +822,7 @@
       }
 
       function isPlaceholder() {
-        if (state.useSb) return false;
-        return state.conversations.length > 0 && state.conversations[0].id === "c_john";
+        return false;
       }
 
       /* ---------- Layout ---------- */
