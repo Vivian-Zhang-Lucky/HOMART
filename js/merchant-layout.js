@@ -156,6 +156,33 @@ const MerchantLayout = {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
 
+    /* Ensure page-specific external scripts are loaded in SPA mode.
+       Some merchant pages rely on scripts (e.g. supabase-chat.js) that may
+       not exist on the current shell page; without this, they silently fall
+       back to local placeholder data until a full refresh. */
+    const ensureExternalScript = (src) => new Promise((resolve, reject) => {
+      const abs = new URL(src, location.href).href;
+      if (
+        document.querySelector(`script[data-spa-ext="${abs}"]`) ||
+        Array.from(document.scripts).some((s) => s.src === abs)
+      ) {
+        resolve();
+        return;
+      }
+      const tag = document.createElement("script");
+      tag.src = abs;
+      tag.async = false;
+      tag.setAttribute("data-spa-ext", abs);
+      tag.onload = () => resolve();
+      tag.onerror = () => reject(new Error("Failed to load script: " + src));
+      document.body.appendChild(tag);
+    });
+
+    const externalScripts = Array.from(doc.querySelectorAll("body script[src]"));
+    for (const ext of externalScripts) {
+      await ensureExternalScript(ext.getAttribute("src"));
+    }
+
     /* 注入页面专属 <style> 标签（去重） */
     document.querySelectorAll("style[data-spa-page]").forEach((s) => s.remove());
     doc.querySelectorAll("style").forEach((s) => {

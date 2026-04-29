@@ -1444,8 +1444,20 @@
 
       let _sbMerchantUnsub = null;
       let _sbPollId = null;
+      async function waitForSupabaseReady(timeoutMs = 2000) {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+          if (window.SupabaseChat && SupabaseChat.isReady()) return true;
+          await new Promise((r) => setTimeout(r, 80));
+        }
+        return !!(window.SupabaseChat && SupabaseChat.isReady());
+      }
+
       await (async function bootMessages() {
-        if (window.SupabaseChat && SupabaseChat.isReady()) {
+        const cloudReady = await waitForSupabaseReady(2200);
+        const hasCloudConfig = !!window.SUPABASE_URL;
+
+        if (cloudReady) {
           state.useSb = true;
           // Show loading spinner while fetching from Supabase
           const listEl = document.getElementById("conv-list");
@@ -1467,7 +1479,14 @@
             Toast.show("Could not load inbox from cloud. Please refresh.", "error");
           }
         } else {
-          loadConversations();
+          // If project has cloud configured but SDK is temporarily unavailable,
+          // avoid flashing stale local placeholder data.
+          if (hasCloudConfig) {
+            state.conversations = [];
+            Toast.show("Chat service is still starting. Please wait a moment.", "info");
+          } else {
+            loadConversations();
+          }
         }
         renderTabs();
         renderList();
